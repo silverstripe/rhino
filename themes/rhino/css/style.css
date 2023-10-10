@@ -1,0 +1,81 @@
+th,td,span,div,a {
+    font-family: "Courier New";
+    font-size: 11px;
+}
+
+.metadata {
+    display: none;
+}
+
+/* used to calculate status widths in builds processor */
+#samples, #samples-gha {
+    visibility: hidden;
+}
+
+.logo {
+    font-weight: bold;
+    font-size:16px;
+    padding: 5px;
+    display: inline-block;
+}
+
+.runs {
+    padding: 0 5px 2px;
+}
+
+table.TF th {
+    height: 15px !important;
+}
+
+.flt {
+    height: 20px !important;
+}
+
+#examplefilters {
+    padding: 5px;
+}
+
+.inf, .helpBtn {
+    height: 15px !important;
+    border: 0 !important;
+}
+
+.tot, .helpBtn {
+    padding: 0px 5px !important;
+}
+
+#examplefilters span {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 5px;
+    background: lightgrey;
+}
+
+#examplefilters span:first-of-type {
+    margin-left: 0;
+}
+
+#mytable {
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px solid #d9d9d9 !important;
+    padding: 3px;
+}
+
+.odd {
+    background-color: #fcf6ef !important;
+}
+
+.even {
+    background-color: #fffdfb !important;
+}
+
+thead tr:first-of-type {
+    background: cornflowerblue;
+}
+
+a:visited {
+    color: blue;
+}

@@ -1,0 +1,6 @@
+---
+Name: rhino-config
+---
+Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor:
+  extensions:
+    - 'App\DataFetcher\Extensions\QueuedJobDescriptorExtension'
