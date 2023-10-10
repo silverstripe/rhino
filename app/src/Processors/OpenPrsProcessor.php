@@ -181,7 +181,7 @@ EOT;
     }
 
     private function deriveOpenPRDataRow(stdClass $pr, string $moduleType, string $account, string $repo): array
-    {  
+    {
         $files = [];
         foreach ($pr->files->nodes as $node) {
             $files[] = [
@@ -205,8 +205,7 @@ EOT;
                 // states are SUCCESS, ERROR, FAILURE, PENDING
                 // it's OK to treat PENDING as red, as sometimes ci tool gets stuck in a
                 // pending state, and 'pending' is not immediately actionable anyway
-                if (
-                    strpos(strtolower($context->context), $ci) !== false &&
+                if (strpos(strtolower($context->context), $ci) !== false &&
                     $context->state != 'SUCCESS'
                 ) {
                     $ciToolRed[$ci] = true;
@@ -217,15 +216,19 @@ EOT;
         // merge conflicts
         $mrgConflicts = $pr->mergeable == 'CONFLICTING';
         
-        // approved / change requeted   
+        // approved / change requeted
         $a = [];
         foreach ($pr->reviews->nodes as $review) {
             if (in_array($review->state, ['APPROVED', 'CHANGES_REQUESTED'])) {
                 $a[$review->author->login ?? ''] = $review->state;
             }
         }
-        $approved = !empty(array_filter($a, function($v) { return $v == 'APPROVED'; }));
-        $changesReq = !empty(array_filter($a, function($v) { return $v == 'CHANGES_REQUESTED'; }));
+        $approved = !empty(array_filter($a, function ($v) {
+            return $v == 'APPROVED';
+        }));
+        $changesReq = !empty(array_filter($a, function ($v) {
+            return $v == 'CHANGES_REQUESTED';
+        }));
         
         // last commit at
         // handle strange state with zero commits after force pushing

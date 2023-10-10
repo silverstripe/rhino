@@ -93,7 +93,7 @@ EOT;
                     $branches[] = $name;
                 }
             }
-            usort($branches, function($a, $b) use ($minorBrnRx) {
+            usort($branches, function ($a, $b) use ($minorBrnRx) {
                 preg_match($minorBrnRx, $a, $ma);
                 preg_match($minorBrnRx, $b, $mb);
                 $n = (int) $ma[1] <=> (int) $mb[1];
@@ -120,7 +120,7 @@ EOT;
             $pmPatBrn = '';
             $pmPrevMinBrn = '';
             // see if there are any branches that match the previous minor branch
-            if (!empty(array_filter($branches, function($branch) use ($pmMinBrn) {
+            if (!empty(array_filter($branches, function ($branch) use ($pmMinBrn) {
                 list($major,) = explode('.', $branch);
                 return $major == $pmMinBrn;
             }))) {
@@ -162,18 +162,26 @@ EOT;
                 // current major
 
                 'nextMinBrn' => $skipCurrentMajor ? '' : $nextMinBrn . '.x-dev',
-                'nextMinGhaStat' => $skipCurrentMajor ? $this->buildBlankBadge() : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMinBrn, $runName),
+                'nextMinGhaStat' => $skipCurrentMajor
+                    ? $this->buildBlankBadge()
+                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMinBrn, $runName),
                 'nextPatBrn' => $skipCurrentMajor ? '' : $nextPatBrn . '.x-dev',
-                'nextPatGhaStat' => $skipCurrentMajor ? $this->buildBlankBadge() : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextPatBrn, $runName),
+                'nextPatGhaStat' => $skipCurrentMajor
+                    ? $this->buildBlankBadge()
+                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextPatBrn, $runName),
 
                 // prev major
                 '|' => '',
 
                 'pmMinBrn' => $pmMinBrn ? ($pmMinBrn . '.x-dev') : '',
-                'pmMinGhaStat' => $pmMinBrn ? ($this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmMinBrn, $runName)) : $this->buildBlankBadge(),
+                'pmMinGhaStat' => $pmMinBrn
+                    ? ($this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmMinBrn, $runName))
+                    : $this->buildBlankBadge(),
 
                 'pmPatBrn' => $pmPatBrn ? ($pmPatBrn . '.x-dev') : '',
-                'pmPatGhaStat' => $pmPatBrn ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmPatBrn, $runName) : $this->buildBlankBadge(),
+                'pmPatGhaStat' => $pmPatBrn
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmPatBrn, $runName)
+                    : $this->buildBlankBadge(),
 
                 'pmPrevMinBrn' => '',
                 'pmPrevMinGhaStat' => $this->buildBlankBadge(),
@@ -181,7 +189,8 @@ EOT;
 
             // if ($pmprevMinBrn) {
             //     $row['pmprevMinBrn'] = $pmprevMinBrn . '.x-dev';
-            //     $row['pmprevMinGhaStat'] = $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmprevMinBrn, 'CI');
+            //     $badge = $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmprevMinBrn, 'CI');
+            //     $row['pmprevMinGhaStat'] = $badge;
             // }
             $rows[] = $row;
         }

@@ -23,13 +23,20 @@ abstract class AbstractProcessor
         return "[status-badge metadata-sort= metadata-status= href=$href src=$src]";
     }
 
-    protected function buildGhaStatusBadge(string $account, string $repo, string $runName, string $branch, string $conclusion)
-    {
+    protected function buildGhaStatusBadge(
+        string $account,
+        string $repo,
+        string $runName,
+        string $branch,
+        string $conclusion
+    ) {
         $uaccount = urlencode($account);
         $urepo = urlencode($repo);
         $ubranch = urlencode($branch);
-        $workflow = str_replace(' ', '-', strtolower($runName)); // assuming that lowercase runName matches workflow filename
-        $href = "https://github.com/{$account}/{$repo}/actions/workflows/{$workflow}.yml?query=branch%3A{$ubranch}+-event%3Apull_request";
+        // assuming that lowercase runName matches workflow filename
+        $workflow = str_replace(' ', '-', strtolower($runName));
+        $href = "https://github.com/{$account}/{$repo}/actions/workflows/{$workflow}.yml"
+            . "?query=branch%3A{$ubranch}+-event%3Apull_request";
 
         // direct request to github from browser
         //$src = "https://github.com/{$account}/{$repo}/actions/workflows/ci.yml/badge.svg?branch={$ubranch}&t=0";

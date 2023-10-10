@@ -58,7 +58,7 @@ class GitHubApiConfig implements ApiConfigInterface
         }
     }
 
-    public function supportsPagination(string $path): bool 
+    public function supportsPagination(string $path): bool
     {
         // manually disable pagination
         if (strpos($path, '?paginate=0') !== false || strpos($path, '&paginate=0') !== false) {

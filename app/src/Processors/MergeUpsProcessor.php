@@ -104,7 +104,7 @@ EOT;
             if ($repo == 'silverstripe-frameworktest') {
                 $branches = ['1', '0.4'];
             } else {
-                usort($branches, function($a, $b) use ($minorBrnRx) {
+                usort($branches, function ($a, $b) use ($minorBrnRx) {
                     preg_match($minorBrnRx, $a, $ma);
                     preg_match($minorBrnRx, $b, $mb);
                     $n = (int) $ma[1] <=> (int) $mb[1];
@@ -138,7 +138,7 @@ EOT;
                         $mergeInto = sprintf('%.1f', $mergeInto);
                     }
                     $lastMajor = $nextMinBrn - 1;
-                    $bs = array_filter($branches, function($branch) use ($lastMajor) {
+                    $bs = array_filter($branches, function ($branch) use ($lastMajor) {
                         return substr($branch, 0, 1) == $lastMajor;
                     });
                     $bs = array_values($bs);
@@ -149,7 +149,9 @@ EOT;
                     $json = $requester->fetch($path, '', $account, $repo, $refetch);
                     $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
                     $arr["{$prefix}Mu"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                    $arr["{$prefix}CmpUrl"] = $needsMergeUp ? "https://github.com/$account/$repo/compare/$mergeInto...$lastMajor" : '';
+                    $arr["{$prefix}CmpUrl"] = $needsMergeUp
+                        ? "https://github.com/$account/$repo/compare/$mergeInto...$lastMajor"
+                        : '';
                     continue;
                 }
                 // current major, previous major
@@ -167,7 +169,7 @@ EOT;
                 $arr["{$prefix}MuPrevMin"] = '';
                 $arr["{$prefix}CmpUrlPrevMin"] = '';
                 $arr["{$prefix}PrevMinBrn"] = '';
-                $bs = array_filter($branches, function($branch) use ($nextMinBrn) {
+                $bs = array_filter($branches, function ($branch) use ($nextMinBrn) {
                     return substr($branch, 0, 1) == $nextMinBrn;
                 });
                 $bs = array_values($bs);
@@ -183,7 +185,9 @@ EOT;
                 $json = $requester->fetch($path, '', $account, $repo, $refetch);
                 $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
                 $arr["{$prefix}Mu"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                $arr["{$prefix}CmpUrl"] = $needsMergeUp ? "https://github.com/$account/$repo/compare/$nextMinBrn...$nextPatBrn" : '';
+                $arr["{$prefix}CmpUrl"] = $needsMergeUp
+                    ? "https://github.com/$account/$repo/compare/$nextMinBrn...$nextPatBrn"
+                    : '';
                 $arr["{$prefix}NextPatBrn"] = "{$nextPatBrn}.x-dev";
 
                 // 4.12...4.11
@@ -192,7 +196,9 @@ EOT;
                     $json = $requester->fetch($path, '', $account, $repo, $refetch);
                     $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
                     $arr["{$prefix}MuPrevMin"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                    $arr["{$prefix}CmpUrlPrevMin"] = $needsMergeUp ? "https://github.com/$account/$repo/compare/$nextPatBrn...$prevMinBrn" : '';
+                    $arr["{$prefix}CmpUrlPrevMin"] = $needsMergeUp
+                        ? "https://github.com/$account/$repo/compare/$nextPatBrn...$prevMinBrn"
+                        : '';
                     $arr["{$prefix}PrevMinBrn"] = "{$prevMinBrn}.x-dev";
                 }
             }
@@ -200,7 +206,8 @@ EOT;
             $json = $requester->fetch("/repos/$account/$repo?paginate=0", '', $account, $repo, $refetch);
             $defaultbranch = $json->root->default_branch;
             // get status of last merge-up job
-            $arr['muStat'] = $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $defaultbranch, 'Merge-up');
+            $badge = $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $defaultbranch, 'Merge-up');
+            $arr['muStat'] = $badge;
             $rows[] = $arr;
         }
         return $rows;

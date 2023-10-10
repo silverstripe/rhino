@@ -23,12 +23,11 @@ abstract class AbstractRequester implements TypeInterface
 
     public function fetch(
         string $path,
-        string $postBody, 
+        string $postBody,
         string $account,
         string $repo,
         bool $refetch
-    ): stdClass
-    {
+    ): stdClass {
         $postBodyHash = md5($postBody);
         $data = [
             'Api' => $this->apiConfig->getType(),

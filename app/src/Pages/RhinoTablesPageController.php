@@ -26,7 +26,7 @@ class RhinoTablesPageController extends PageController
             $sortOrder = $processor->getSortOrder();
             $filename = "{$type}.html";
             if (file_exists("{$dir}/{$filename}")) {
-                while(array_key_exists($sortOrder, $arr)) {
+                while (array_key_exists($sortOrder, $arr)) {
                     $sortOrder++;
                 }
                 $arr[$sortOrder] = $type;

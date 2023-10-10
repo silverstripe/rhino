@@ -259,7 +259,7 @@ EOT;
             ];
         }
         $minorBranches = array_unique($minorBranches);
-        usort($minorBranches, function($a, $b) {
+        usort($minorBranches, function ($a, $b) {
             $tmpa = explode('.', $a);
             $tmpb = explode('.', $b);
             if ($tmpa[0] == $tmpb[0]) {
@@ -323,7 +323,7 @@ EOT;
 
     private function filterTagListObjs(array $objs, string $minorBranch, ?string $patch = null): array
     {
-        $arr = array_filter($objs, function($obj) use ($minorBranch, $patch) {
+        $arr = array_filter($objs, function ($obj) use ($minorBranch, $patch) {
             if ($patch === null) {
                 return $obj['minorBranch'] === $minorBranch;
             }
@@ -338,8 +338,7 @@ EOT;
         string $currentTag,
         string $moduleName,
         string $minorType // next | curr | prev | lastmaj
-    ): array
-    {
+    ): array {
         $data = [
             'hasUnreleasedChanges' => false,
             'newTag' => 'unknown',
@@ -412,8 +411,7 @@ EOT;
                 $commit->commit->author->name ?? '',
                 substr($commit->sha, 0, 9)
             );
-            if (
-                strpos($commitMessage, '* Merge pull request #') === 0 ||
+            if (strpos($commitMessage, '* Merge pull request #') === 0 ||
                 strpos($commitMessage, "* Merge branch '") === 0
             ) {
                 continue;
@@ -429,7 +427,10 @@ EOT;
         $data['changelog'] = implode("\n", array_keys($arr));
 
         // TODO: hardcoded
-        if (preg_match('#(?s)^\* Update build status badge \(Steve Boyd\) - [a-z0-9]{9}$#', str_replace("\n", '', $data['changelog']))) {
+        if (preg_match(
+            '#(?s)^\* Update build status badge \(Steve Boyd\) - [a-z0-9]{9}$#',
+            str_replace("\n", '', $data['changelog'])
+        )) {
             $data['changelog'] = '';
         }
         return $data;

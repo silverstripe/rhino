@@ -7,12 +7,12 @@ class PullRequestUtil
     public static function getPullRequestType(array $files, string $author): string
     {
         $c = self::getPullRequestFileCounts($files);
-        $types = array_filter($c, function($v, $k) {
+        $types = array_filter($c, function ($v, $k) {
             return $v['count'] > 0;
         }, ARRAY_FILTER_USE_BOTH);
         $types = array_keys($types);
         sort($types);
-        if($author == 'dependabot') {
+        if ($author == 'dependabot') {
             return 'depbot';
         } elseif ($types == ['doc'] || $types == ['doc', 'image']) {
             return 'doc';

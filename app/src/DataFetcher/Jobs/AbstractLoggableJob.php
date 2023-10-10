@@ -55,7 +55,8 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
     abstract protected function getTimeMatrix(): array;
 
     // ensure matrix has all days, and that it's in order
-    private function cleanMatrix(array $matrix) {
+    private function cleanMatrix(array $matrix)
+    {
         $m = $this->emptyMatrix();
         foreach ($matrix as $day => $times) {
             $m[$day] = $times;
@@ -84,7 +85,7 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
         $timeNow = (int) date('Gi'); // 730
 
         // get all times after time now
-        $times = array_filter($matrix[$today], function($matrixTime) use ($timeNow) {
+        $times = array_filter($matrix[$today], function ($matrixTime) use ($timeNow) {
             return $timeNow < $matrixTime;
         });
         if (!empty($times)) {
