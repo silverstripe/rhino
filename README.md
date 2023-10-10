@@ -34,7 +34,13 @@ Only accessing public repos, create a GitHub token with the NO scopes ticked. Fo
 
 ## Environment variables
 
+It is necessary to add the following environment variables so that requests can be made to the GitHub API.
+
 ```
 GITHUB_USER="xyz"
 GITHUB_TOKEN="123"
 ```
+
+## UAT queuedjobs
+
+Queuedjobs in UAT will intentionally not auto-generate because of some logic in `AbstractLoggableJob`. This was done to prevent lots of unnecessary GitHub API requests being made. To get a job to run in UAT, manually create and run it from within the jobs admin.
