@@ -21,10 +21,7 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
         $this->queueNextJob();
         $isComplete = true;
         try {
-            // Don't process jobs on UAT as this will end up making a lot of unecessary API calls
-            if (!Director::isTest()) {
-                $this->processWithLogging();
-            }
+            $this->processWithLogging();
         } catch (Exception $e) {
             Logger::singleton()->log(get_class($e));
             Logger::singleton()->log($e->getMessage());
@@ -59,7 +56,16 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
 
     // ensure matrix has all days, and that it's in order
     private function cleanMatrix(array $matrix) {
-        $m = [
+        $m = $this->emptyMatrix();
+        foreach ($matrix as $day => $times) {
+            $m[$day] = $times;
+        }
+        return $m;
+    }
+
+    private function emptyMatrix(): array
+    {
+        return [
             'mon' => [],
             'tue' => [],
             'wed' => [],
@@ -68,10 +74,6 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
             'sat' => [],
             'sun' => [],
         ];
-        foreach ($matrix as $day => $times) {
-            $m[$day] = $times;
-        }
-        return $m;
     }
 
     private function deriveNextTime(array $matrix): string
@@ -112,6 +114,7 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
             }
             return $this->buildMysqlDateTime($mysqlDate, $times[0]);
         }
+        return '';
     }
 
     private function buildMysqlDateTime($mysqlDate, $time)
@@ -124,7 +127,14 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
     private function queueNextJob(): void
     {
         $matrix = $this->getTimeMatrix();
+        // Don't queue jobs on UAT as this will end up making a lot of unecessary API calls
+        if (Director::isTest()) {
+            $matrix = $this->emptyMatrix();
+        }
         $nextTime = $this->deriveNextTime($matrix);
+        if (!$nextTime) {
+            return;
+        }
         QueuedJobService::singleton()->queueJob(
             Injector::inst()->create(static::class),
             $nextTime
