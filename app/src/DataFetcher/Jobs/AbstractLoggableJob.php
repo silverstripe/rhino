@@ -4,6 +4,7 @@ namespace App\DataFetcher\Jobs;
 
 use Exception;
 use App\DataFetcher\Misc\Logger;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
@@ -20,7 +21,10 @@ abstract class AbstractLoggableJob extends AbstractQueuedJob
         $this->queueNextJob();
         $isComplete = true;
         try {
-            $this->processWithLogging();
+            // Don't process jobs on UAT as this will end up making a lot of unecessary API calls
+            if (!Director::isTest()) {
+                $this->processWithLogging();
+            }
         } catch (Exception $e) {
             Logger::singleton()->log(get_class($e));
             Logger::singleton()->log($e->getMessage());
