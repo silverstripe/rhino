@@ -17,9 +17,6 @@ class GraphQLRequester extends AbstractRequester
         $ucMethod = strtoupper($method);
         $apiConfig = $this->apiConfig;
 
-        $lastCursor = '';
-        // TODO: args (.., $lastCursor = '') ... do pagination privately within this class
-
         $url = $apiConfig->deriveUrl($path);
         Logger::singleton()->log("REST {$ucMethod} {$url}");
         $queryJson = $this->buildGraphQLQueryJson($postBody);

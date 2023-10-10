@@ -60,8 +60,6 @@ EOT;
             }
         }
 
-        // $varsList = [['silverstripe', 'developer-docs']];
-
         foreach ($varsList as $vars) {
             list($account, $repo) = $vars;
             $path = "/repos/$account/$repo/issues?state=open";

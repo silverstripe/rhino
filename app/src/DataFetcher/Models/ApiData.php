@@ -9,7 +9,6 @@ class ApiData extends DataObject
     private static $table_name = 'ApiData';
 
     private static $db = [
-        // TODO: datetime of insertion
         'Api' => 'Varchar',
         'Requester' => 'Varchar',
         'Path' => 'Varchar',
@@ -19,7 +18,6 @@ class ApiData extends DataObject
         'ResponseBody' => 'Text'
     ];
 
-    // TODO: composite index
     private static $indexes = [
         'Api' => true,
         'Requester' => true,

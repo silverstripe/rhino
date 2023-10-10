@@ -5,7 +5,6 @@ namespace App\Misc;
 use InvalidArgumentException;
 use App\Processors\AbstractProcessor;
 use App\Services\OutputUtil;
-use App\DataFetcher\Misc\Logger;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Injector\Injectable;
 
@@ -66,7 +65,6 @@ class Runner
         // sort is used for column sorting
         // status is used for column filtering
         $cl = strpos($href, 'travis') !== false ? 'travis' : 'gha';
-        // $st = $cl == 'gha' ? 'style="display:none"' : '';
         $a = <<<EOT
             <div class="status-badge $cl">
                 <div class="metadata">

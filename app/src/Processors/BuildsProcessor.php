@@ -58,13 +58,6 @@ EOT;
             }
         }
 
-        // $varsList = [
-        //     // ['silverstripe', 'silverstripe-linkfield'],
-        //     // ['silverstripe', 'silverstripe-sqlite3'],
-        //     // ['silverstripe', 'gha-run-tests'],
-        //     // ['silverstripe', 'gha-action-ci'],
-        // ];
-
         $rows = [];
         foreach ($varsList as $vars) {
             list($account, $repo) = $vars;
@@ -75,9 +68,7 @@ EOT;
 
             // get minor branches available
             $branches = [];
-            // $branchesIncludingReleases = [];
             $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
-            // $minorBrnWithReleasesRx = '#^([1-9])\.([0-9]+)(\-release|)$#';
             $path = "/repos/$account/$repo/branches?paginate=0&per_page=100";
             $json = $requester->fetch($path, '', $account, $repo, $refetch);
             foreach ($json->root ?? [] as $branch) {
@@ -85,10 +76,6 @@ EOT;
                     continue;
                 }
                 $name = $branch->name;
-                // if (!preg_match($minorBrnWithReleasesRx, $name)) {
-                //     continue;
-                // }
-                // $branchesIncludingReleases[] = $name;
                 if (preg_match($minorBrnRx, $name)) {
                     $branches[] = $name;
                 }
@@ -111,14 +98,10 @@ EOT;
             if (count($branches) == 0) {
                 continue;
             }
-            // $nextPatRelBrn = $branches[0] . '-release'; // 4.7-release
-            // $nextPatRelBrn = in_array($nextPatRelBrn, $branchesIncludingReleases) ? $nextPatRelBrn : '';
             $nextPatBrn = $branches[0]; // 4.7
             $nextMinBrn = $nextPatBrn[0]; // 4
-            # $nextMajBrn = $nextMinBrn + 1;
             $pmMinBrn = $nextMinBrn - 1; // 3
             $pmPatBrn = '';
-            $pmPrevMinBrn = '';
             // see if there are any branches that match the previous minor branch
             if (!empty(array_filter($branches, function ($branch) use ($pmMinBrn) {
                 list($major,) = explode('.', $branch);
@@ -129,7 +112,6 @@ EOT;
                         if ($pmPatBrn == '') {
                             $pmPatBrn = $branch;
                         } else {
-                            $pmPrevMinBrn = $branch;
                             break;
                         }
                     }
@@ -152,12 +134,6 @@ EOT;
             $row = [
                 'account' => $account,
                 'repo' => $repo,
-                // 'link' => "https://travis-ci.com/github/$account/$repo/branches",
-
-                // next major
-
-                // 'nextMajBrn' => $nextMajBrn . '.x-dev',
-                // 'nextMajGhaStat' => $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMajBrn),
 
                 // current major
 
@@ -187,11 +163,6 @@ EOT;
                 'pmPrevMinGhaStat' => $this->buildBlankBadge(),
             ];
 
-            // if ($pmprevMinBrn) {
-            //     $row['pmprevMinBrn'] = $pmprevMinBrn . '.x-dev';
-            //     $badge = $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmprevMinBrn, 'CI');
-            //     $row['pmprevMinGhaStat'] = $badge;
-            // }
             $rows[] = $row;
         }
         return $rows;

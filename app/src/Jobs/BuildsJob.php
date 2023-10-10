@@ -21,8 +21,6 @@ class BuildsJob extends AbstractLoggableJob
     protected function getTimeMatrix(): array
     {
         // job only pull in new modules
-        // status badges are just images updated by travis-ci
-        $skip = [];
         $run = [130, 1145];
         return [
             'mon' => $run,

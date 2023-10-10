@@ -30,7 +30,6 @@ class MetaData
         ],
     ];
 
-    // TODO: auto-detect and remove, or just put within the relevant processor
     public const MODULES_WITHOUT_NEXT_MINOR_BRANCH = [
         'bringyourownideas' => [
             'silverstripe-maintenance',
@@ -42,7 +41,6 @@ class MetaData
         ],
     ];
 
-    // TODO: auto-detect and remove, or just put within the relevant processor
     public const MODULES_WITH_CUSTOM_TRAVIS = [
         'silverstripe' => [
             'cwp-starter-theme', // watea-theme uses shared config

@@ -43,4 +43,4 @@ GITHUB_TOKEN="123"
 
 ## UAT queuedjobs
 
-Queuedjobs in UAT will intentionally not auto-generate because of some logic in `AbstractLoggableJob`. This was done to prevent lots of unnecessary GitHub API requests being made. To get a job to run in UAT, manually create and run it from within the jobs admin.
+Queued jobs on UAT will intentionally not recreate themselves because of some logic in `AbstractLoggableJob`. This was done to prevent lots of unnecessary GitHub API requests being made. To get a job to run in UAT, manually create and run it from within the jobs admin.

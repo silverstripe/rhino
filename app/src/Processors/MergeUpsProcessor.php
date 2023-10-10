@@ -73,12 +73,6 @@ EOT;
             }
         }
 
-        // $varsList = [
-        //     ['silverstripe', 'silverstripe-elemental'],
-        //     // ['silverstripe', 'silverstripe-framework'],
-        //     //['silverstripe', 'silverstripe-frameworktest'],
-        // ];
-
         $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
         $rows = [];
         foreach ($varsList as $vars) {

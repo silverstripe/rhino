@@ -63,11 +63,6 @@ class RecentMergedPrsProcessor extends AbstractProcessor
             }
         }
 
-        // $varsList = [
-        //     ['silverstripe', 'silverstripe-framework', 'regular'],
-        // ];
-
-        // TODO: this should be somehow wrapped into GraphQLRequester (see comment in OpenPrsProcessor)
         $keys = [];
         $maxAttempts = 3;
         $threeWeeksAgo = date('Y-m-d', strtotime('now - 1 year'));

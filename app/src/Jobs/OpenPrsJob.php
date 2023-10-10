@@ -20,7 +20,6 @@ class OpenPrsJob extends AbstractLoggableJob
 
     protected function getTimeMatrix(): array
     {
-        $skip = [];
         $run = [530];
         return [
             'mon' => $run,

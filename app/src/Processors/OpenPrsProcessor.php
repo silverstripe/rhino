@@ -63,15 +63,6 @@ EOT;
             }
         }
 
-        // $varsList = [
-        //     ['silverstripe', 'silverstripe-admin', 'regular'],
-        //     ['silverstripe', 'silverstripe-framework', 'regular'],
-        //     ['silverstripe', 'silverstripe-asset-admin', 'regular'],
-        //     ['silverstripe', 'silverstripe-elemental', 'regular'],
-        //     ['silverstripe', 'silverstripe-elemental', 'regular'],
-        // ];
-
-        // TODO: this should be somehow wrapped into GraphQLRequester
         // can often be quite a few errors with github graphql api
         // partcularly when doing a new query for the first time
         // try downloading a few times in total, though retry after all other queries have been done
@@ -256,7 +247,6 @@ EOT;
             'lastCmitAt' => DateTimeUtil::timestampToNZDate($lastCommitAt),
             'approved' => $approved,
             'draft' => $pr->isDraft,
-            // 'travisRed' => $ciToolRed['travis'],
             'changesReq' => $changesReq,
             'mrgConflct' => $mrgConflicts,
             'numFiles' => $prStats['numFiles'],

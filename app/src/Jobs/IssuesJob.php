@@ -20,7 +20,6 @@ class IssuesJob extends AbstractLoggableJob
 
     protected function getTimeMatrix(): array
     {
-        $skip = [];
         $run = [800, 1100, 1400];
         return [
             'mon' => $run,

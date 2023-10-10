@@ -30,19 +30,11 @@ abstract class AbstractProcessor
         string $branch,
         string $conclusion
     ) {
-        $uaccount = urlencode($account);
-        $urepo = urlencode($repo);
         $ubranch = urlencode($branch);
         // assuming that lowercase runName matches workflow filename
         $workflow = str_replace(' ', '-', strtolower($runName));
         $href = "https://github.com/{$account}/{$repo}/actions/workflows/{$workflow}.yml"
             . "?query=branch%3A{$ubranch}+-event%3Apull_request";
-
-        // direct request to github from browser
-        //$src = "https://github.com/{$account}/{$repo}/actions/workflows/ci.yml/badge.svg?branch={$ubranch}&t=0";
-
-        // proxy via server to request with a token to get around 429 rate-limit
-        // $src = "statusbadge.php?account=$uaccount&repo=$urepo&branch=$ubranch";
 
         // status from cron
         $src = "/_resources/themes/rhino/images/gha-ci-$conclusion.svg";

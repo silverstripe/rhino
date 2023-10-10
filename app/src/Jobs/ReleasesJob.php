@@ -20,7 +20,6 @@ class ReleasesJob extends AbstractLoggableJob
 
     protected function getTimeMatrix(): array
     {
-        $skip = [];
         $run = [2300];
         return [
             'mon' => $run,

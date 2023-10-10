@@ -100,10 +100,6 @@ EOT;
             }
         }
 
-        // $varsList = [
-        //     ['silverstripe', 'silverstripe-assets'],
-        // ];
-
         foreach ($varsList as $vars) {
             list($account, $repo) = $vars;
             $moduleName = "{$account}/{$repo}";
@@ -426,7 +422,7 @@ EOT;
         $arr = array_reverse($arr);
         $data['changelog'] = implode("\n", array_keys($arr));
 
-        // TODO: hardcoded
+        // hardcoded
         if (preg_match(
             '#(?s)^\* Update build status badge \(Steve Boyd\) - [a-z0-9]{9}$#',
             str_replace("\n", '', $data['changelog'])
