@@ -54,14 +54,13 @@ class RhinoTablesPageController extends PageController
     public function getHtmlContent(): string
     {
         $table = $this->getRequest()->getVar('t') ?? '';
-        if (!preg_match('#^[a-z0-9\-]+$#', $table)) {
-            return '';
+        $files = scandir(ASSETS_PATH . '/html');
+        foreach ($files as $file) {
+            if ($file === "$table.html") {
+                return file_get_contents(ASSETS_PATH . "/html/$file");
+            }
         }
-        $path = ASSETS_PATH . "/html/{$table}.html";
-        if (!file_exists($path)) {
-            return '';
-        }
-        return file_get_contents($path);
+        return '';
     }
 
     private function getProcessorClasses(): array
