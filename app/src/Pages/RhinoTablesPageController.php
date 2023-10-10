@@ -53,7 +53,7 @@ class RhinoTablesPageController extends PageController
 
     public function getHtmlContent(): string
     {
-        $table = $this->getRequest()->getVar('t');
+        $table = $this->getRequest()->getVar('t') ?? '';
         if (!preg_match('#^[a-z0-9\-]+$#', $table)) {
             return '';
         }

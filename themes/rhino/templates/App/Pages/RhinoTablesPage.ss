@@ -16,7 +16,7 @@
                     RHINO
                 </span>
                 <% loop $HtmlTables %>
-                    <a class="table-link" data-table="{$Table}" href="{$Top.BaseHref}{$Top.URLSegment}?t={$Table}">$Table</a>
+                    <a class="table-link" data-table="{$Table}" href="{$Top.BaseHref}/{$Top.URLSegment}?t={$Table}">$Table</a>
                     <% if not $Last %>|<% end_if %>
                 <% end_loop %>
             </div>
