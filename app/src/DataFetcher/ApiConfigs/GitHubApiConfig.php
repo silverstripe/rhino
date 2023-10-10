@@ -2,7 +2,6 @@
 
 namespace App\DataFetcher\Apis;
 
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Requesters\AbstractRequester;
 use SilverStripe\Core\Environment;
 

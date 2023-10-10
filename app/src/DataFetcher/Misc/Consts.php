@@ -185,7 +185,6 @@ class Consts
                 'silverstripe-behat-extension',
                 'silverstripe-serve',
                 'silverstripe-graphql-devtools',
-                // 'silverstripe-travis-shared',
                 'silverstripe-testsession',
                 'webpack-config',
                 'gha-merge-up',

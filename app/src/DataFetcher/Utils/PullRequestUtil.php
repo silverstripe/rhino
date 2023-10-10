@@ -70,11 +70,8 @@ class PullRequestUtil
     
     private static function isConfigFile(string $path): bool
     {
-        // possiblly should treat .travis.yml and .scrutinizer as 'tooling'
         $b = preg_match('@lang/[A-Za-z]{2}.yml$@', $path);
         return $b || in_array($path, [
-            '.travis.yml',
-            '.scrutinizer.yml',
             'behat.yml',
             'composer.json',
             'composer.lock',
