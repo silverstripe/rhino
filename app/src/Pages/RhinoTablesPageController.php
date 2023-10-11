@@ -53,10 +53,10 @@ class RhinoTablesPageController extends PageController
 
     public function getHtmlContent(): string
     {
-        $table = $this->getRequest()->getVar('t') ?? '';
+        $type = $this->getTypeFromQueryString();
         $files = scandir(ASSETS_PATH . '/html');
         foreach ($files as $file) {
-            if ($file === "$table.html") {
+            if ($file === "$type.html") {
                 return file_get_contents(ASSETS_PATH . "/html/$file");
             }
         }
@@ -74,7 +74,7 @@ class RhinoTablesPageController extends PageController
 
     private function getRun(array $jobStatuses, string $field): string
     {
-        $type = $this->getRequest()->getVar('t') ?: '';
+        $type = $this->getTypeFromQueryString();
         $processor = $this->createProcessor($type);
         if (!$processor) {
             return '';
@@ -88,6 +88,13 @@ class RhinoTablesPageController extends PageController
             return '';
         }
         return DateTimeUtil::formatMysqlTimestamp($descriptor->$field);
+    }
+
+    private function getTypeFromQueryString(): string
+    {
+        $type = $this->getRequest()->getVar('t') ?: '';
+        $type = preg_replace('#[^a-z\-]#', '', $type);
+        return $type;
     }
 
     private function createProcessor(string $type): ?AbstractProcessor

@@ -71,7 +71,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (filters) {
             filters = JSON.parse(filters);
             for (var filterKey of Object.keys(filters)) {
-                tf.setFilterValue(getFilterColumn(filterKey), filters[filterKey]);
+                var column = getFilterColumn(filterKey);
+                if (!column) {
+                    continue;
+                }
+                var value = filters[filterKey];
+                // remove any potential html tags embeded in json
+                var div = document.createElement('div');
+                div.innerHTML = value;
+                value = div.innerText;
+                tf.setFilterValue(column, value);
             }
             tf.filter();
         }
@@ -82,7 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
         for (var i = 0; i < arr.length; i++) {
             var a = arr[i].split('=');
             if (a[0] == key) {
-                return decodeURIComponent(a[1]);
+                var value = decodeURIComponent(a[1]);
+                if (key === 't') {
+                    value = value.replace(/[^a-z\-]/g, '');
+                }
+                return value;
             }
         }
         return '';
