@@ -201,6 +201,7 @@ class Consts
                 'gha-ci',
                 'gha-dispatch-ci',
                 'gha-issue',
+                'markdown-php-codesniffer',
             ]
         ],
     ];
