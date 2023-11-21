@@ -64,12 +64,12 @@ td, th {
     padding: 3px;
 }
 
-.odd {
-    background-color: #fcf6ef !important;
+#mytable .odd {
+    background-color: #fcf6ef;
 }
 
-.even {
-    background-color: #fffdfb !important;
+#mytable .even {
+    background-color: #fffdfb;
 }
 
 thead tr:first-of-type {
