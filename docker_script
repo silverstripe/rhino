@@ -63,6 +63,11 @@ for type in $types; do
     fi
 done
 
+a2enmod ssl
+a2enmod headers
+# a2enconf ssl-params
+apache2ctl configtest
+
 # Apache gets grumpy about PID files pre-existing, so remove them:
 rm -f /var/run/apache2/apache2.pid
 

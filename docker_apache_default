@@ -34,4 +34,18 @@
 	#Include conf-available/serve-cgi-bin.conf
 </VirtualHost>
 
+<VirtualHost *:443>
+	ServerName silverstripe.com.test
+	ServerAdmin webmaster@localhost
+	DocumentRoot /var/www
+   <Directory /var/www>
+       AllowOverride All
+       Require all granted
+   </Directory>
+   ErrorLog /dev/stdout
+   CustomLog /dev/stdout combined
+
+   SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
+   SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+</VirtualHost>
 # vim: syntax=apache ts=4 sw=4 sts=4 sr noet
