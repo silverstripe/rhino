@@ -42,6 +42,30 @@ class RecentMergedPrsProcessor extends AbstractProcessor
                         }
                     }
                 }, 250);
+
+                // Find the column index of the "action" column
+                let actionColIndex = 0;
+                const tableHeaders = document.querySelectorAll('thead th');
+                for (let i = 0; i < tableHeaders.length; i++) {
+                    if (tableHeaders[i].innerText === 'action') {
+                        actionColIndex = i + 1;
+                        break;
+                    }
+                }
+                // Loop through all the rows and convert the action cell to a "Copy MD" button
+                var tds = document.querySelectorAll(`tbody td:nth-child(\${actionColIndex})`);
+                for (let i = 0; i < tds.length; i++) {
+                    const td = tds[i];
+                    const md = td.innerHTML;
+                    td.innerHTML = '';
+                    const btn = document.createElement('button');
+                    btn.addEventListener('click', function() {
+                        navigator.clipboard.writeText(md);
+                        btn.innerHTML = 'Copied';
+                    });
+                    btn.innerHTML = 'Copy';
+                    td.appendChild(btn);
+                }
             })();
         EOT;
     }
@@ -153,6 +177,8 @@ class RecentMergedPrsProcessor extends AbstractProcessor
 
         $prStats = $this->prStats($pr->files->nodes);
 
+        $markdownLink = "[{$pr->title}]({$pr->url}) by [{$authorName}](https://github.com/$author)";
+
         $row = [
             'account' => $account,
             'repo' => $repo,
@@ -175,6 +201,7 @@ class RecentMergedPrsProcessor extends AbstractProcessor
             'unit' => $prStats['unit'],
             'behat' => $prStats['behat'],
             'jest' => $prStats['jest'],
+            'action' => $markdownLink,
         ];
         return $row;
     }
