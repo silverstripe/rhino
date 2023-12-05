@@ -8,28 +8,6 @@ Use the following querystring syntax to select a table and filter the results - 
 
 `?t=merged-prs&filters={"authorType"%3A"!product%20%26%26%20!bot"}`
 
-## Docker commands
-
-**Start containers**
-
-docker-compose up --build -d
-
-**Stop containers**
-
-docker-compose down
-
-**SSH in as root**
-
-docker exec -it rhino_webserver /bin/bash
-
-**SSH in as www-data user**
-
-docker exec -it rhino_webserver sh -c "cd /var/www && su -s /bin/bash www-data"
-
-## Log in to database from host
-
-`mysql -uroot -proot -h0.0.0.0 -P3398 -DSS_mysite`
-
 ## GitHub API token
 
 Rhino is designed to only access public repos, therefore the GitHub API token should have zero permissions. The token is used purely to increase the allowed API rate limit.
