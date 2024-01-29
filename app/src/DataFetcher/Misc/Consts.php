@@ -202,6 +202,7 @@ class Consts
                 'gha-dispatch-ci',
                 'gha-issue',
                 'markdown-php-codesniffer',
+                'silverstripe-standards',
             ]
         ],
     ];
