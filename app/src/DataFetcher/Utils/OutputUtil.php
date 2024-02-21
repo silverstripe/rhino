@@ -63,7 +63,13 @@ class OutputUtil
         preg_match_all($rx, $html, $m);
         foreach ($m[0] as $url) {
             $href = trim($url, '><');
-            $html = str_replace($url, "><a href=\"{$href}\" target=\"_blank\">link</a><", $html);
+            $extraText = '';
+            // hack for MergeUpsProcessor
+            if (strpos($href, ':needs-merge-up') !== false) {
+                $extraText = "needs-merge-up<br><br>";
+                $href = str_replace(':needs-merge-up', '', $href);
+            }
+            $html = str_replace($url, ">$extraText<a href=\"{$href}\" target=\"_blank\">link</a><", $html);
         }
         self::writeToFile($filename, $html);
     }

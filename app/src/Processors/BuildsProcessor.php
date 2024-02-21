@@ -66,9 +66,10 @@ EOT;
                 continue;
             }
 
-            // get minor branches available
-            $branches = [];
+            $minorBranches = [];
+            $majorBranches = [];
             $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
+            $majorBrnRx = '#^([1-9])$#';
             $path = "/repos/$account/$repo/branches?paginate=0&per_page=100";
             $json = $requester->fetch($path, '', $account, $repo, $refetch);
             foreach ($json->root ?? [] as $branch) {
@@ -77,10 +78,13 @@ EOT;
                 }
                 $name = $branch->name;
                 if (preg_match($minorBrnRx, $name)) {
-                    $branches[] = $name;
+                    $minorBranches[] = $name;
+                }
+                if (preg_match($majorBrnRx, $name)) {
+                    $majorBranches[] = $name;
                 }
             }
-            usort($branches, function ($a, $b) use ($minorBrnRx) {
+            usort($minorBranches, function ($a, $b) use ($minorBrnRx) {
                 preg_match($minorBrnRx, $a, $ma);
                 preg_match($minorBrnRx, $b, $mb);
                 $n = (int) $ma[1] <=> (int) $mb[1];
@@ -89,25 +93,54 @@ EOT;
                 }
                 return (int) $ma[2] <=> (int) $mb[2];
             });
-            $branches = array_reverse($branches);
-            // quick hack for linkfield which only has a `4` branch while it's in dev
-            // delete this onece linkfield is supported and stable
-            if (count($branches) == 0 && $repo == 'silverstripe-linkfield') {
-                $branches = ['4.0'];
+            usort($majorBranches, function ($a, $b) use ($majorBrnRx) {
+                preg_match($majorBrnRx, $a, $ma);
+                preg_match($majorBrnRx, $b, $mb);
+                return (int) $ma[1] <=> (int) $mb[1];
+            });
+            $minorBranches = array_reverse($minorBranches);
+            $majorBranches = array_reverse($majorBranches);
+            // remove any < 4 minor and major branches for linkfield
+            if ($repo == 'silverstripe-linkfield') {
+                $minorBranches = array_filter($minorBranches, function ($branch) {
+                    return (int) $branch >= 4;
+                });
+                $majorBranches = array_filter($majorBranches, function ($branch) {
+                    return (int) $branch >= 4;
+                });
+                // hack for linkfield which only has a `4` branch while it's in dev
+                // this is done so that `$minorBranches[0]` below passes
+                if (count($minorBranches) == 0) {
+                    $minorBranches = ['4.0'];
+                }
             }
-            if (count($branches) == 0) {
-                continue;
-            }
-            $nextPatBrn = $branches[0]; // 4.7
-            $nextMinBrn = $nextPatBrn[0]; // 4
-            $pmMinBrn = $nextMinBrn - 1; // 3
+            $nextPatBrn = '';
+            $nextMinBrn = '';
+            $pmMinBrn = '';
             $pmPatBrn = '';
+            $currMajBrn = '';
+            $nextMajBrn = '';
+            if (count($minorBranches)) {
+                $nextPatBrn = count($minorBranches) ? $minorBranches[0] : ''; // 4.7
+                $nextMinBrn = substr($nextPatBrn, 0, 1); // 4
+                $pmMinBrn = $nextMinBrn - 1; // 3
+                $currMajBrn = preg_replace($minorBrnRx, '$1', $nextPatBrn);
+                if (count($majorBranches) && $currMajBrn != $majorBranches[0]) {
+                    $nextMajBrn = $majorBranches[0]; // 5
+                }
+            } else {
+                if (count($majorBranches)) {
+                    $currMajBrn = $majorBranches[0];
+                } else {
+                    continue;
+                }
+            }
             // see if there are any branches that match the previous minor branch
-            if (!empty(array_filter($branches, function ($branch) use ($pmMinBrn) {
+            if (!empty(array_filter($minorBranches, function ($branch) use ($pmMinBrn) {
                 list($major,) = explode('.', $branch);
                 return $major == $pmMinBrn;
             }))) {
-                foreach ($branches as $branch) {
+                foreach ($minorBranches as $branch) {
                     if (strpos($branch, "$pmMinBrn.") === 0) {
                         if ($pmPatBrn == '') {
                             $pmPatBrn = $branch;
@@ -117,6 +150,14 @@ EOT;
                     }
                 }
             };
+
+            // remove any < 4 branches for linkfield
+            // note: this is not duplicated code from the other silverstripe-linkfield conditional above
+            if ($repo == 'silverstripe-linkfield') {
+                if ($pmMinBrn == '3') {
+                    $pmMinBrn = '';
+                }
+            }
 
             $skipCurrentMajor = false;
             if (in_array($repo, [
@@ -135,8 +176,14 @@ EOT;
                 'account' => $account,
                 'repo' => $repo,
 
-                // current major
+                // next major
+                'nextMajBrn' => $nextMajBrn ? ($nextMajBrn . '.x-dev') : '',
+                'nextMajGhaStat' => $nextMajBrn == ''
+                    ? $this->buildBlankBadge()
+                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMajBrn, $runName),
 
+                // current major
+                '| ' => '',
                 'nextMinBrn' => $skipCurrentMajor ? '' : $nextMinBrn . '.x-dev',
                 'nextMinGhaStat' => $skipCurrentMajor
                     ? $this->buildBlankBadge()

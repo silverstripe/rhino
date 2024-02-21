@@ -27,11 +27,11 @@ class MergeUpsProcessor extends AbstractProcessor
                 var tds = document.getElementsByTagName('td');
                 for (var i = 0; i < tds.length; i++) {
                     var td = tds[i];
-                    var v = td.innerText;
+                    var v = td.innerHTML;
                     var c = '';
-                    if (['needs-merge-up'].indexOf(v) != -1) {
+                    if (v.indexOf('needs-merge-up') != -1) {
                         c = 'khaki';
-                    } else if (['up-to-date'].indexOf(v) != -1) {
+                    } else if (v.indexOf('up-to-date') != -1) {
                         c = 'palegreen';
                     }
                     if (c) {
@@ -74,12 +74,14 @@ EOT;
         }
 
         $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
+        $majorBrnRx = '#^([1-9])$#';
         $rows = [];
         foreach ($varsList as $vars) {
             list($account, $repo) = $vars;
 
             // get branches available
-            $branches = [];
+            $minorBranches = [];
+            $majorBranches = [];
             $json = $requester->fetch("/repos/$account/$repo/branches", '', $account, $repo, $refetch);
             foreach ($json->root ?? [] as $branch) {
                 if (!$branch) {
@@ -87,7 +89,10 @@ EOT;
                 }
                 $name = $branch->name;
                 if (preg_match($minorBrnRx, $name)) {
-                    $branches[] = $name;
+                    $minorBranches[] = $name;
+                }
+                if (preg_match($majorBrnRx, $name)) {
+                    $majorBranches[] = $name;
                 }
             }
             $arr = [
@@ -96,9 +101,9 @@ EOT;
                 'muStat' => '',
             ];
             if ($repo == 'silverstripe-frameworktest') {
-                $branches = ['1', '0.4'];
+                $minorBranches = ['1', '0.4'];
             } else {
-                usort($branches, function ($a, $b) use ($minorBrnRx) {
+                usort($minorBranches, function ($a, $b) use ($minorBrnRx) {
                     preg_match($minorBrnRx, $a, $ma);
                     preg_match($minorBrnRx, $b, $mb);
                     $n = (int) $ma[1] <=> (int) $mb[1];
@@ -107,32 +112,73 @@ EOT;
                     }
                     return (int) $ma[2] <=> (int) $mb[2];
                 });
-                $branches = array_reverse($branches);
+                usort($majorBranches, function ($a, $b) use ($majorBrnRx) {
+                    preg_match($majorBrnRx, $a, $ma);
+                    preg_match($majorBrnRx, $b, $mb);
+                    return (int) $ma[1] <=> (int) $mb[1];
+                });
+                $minorBranches = array_reverse($minorBranches);
+                $majorBranches = array_reverse($majorBranches);
             }
-            if (count($branches) == 0) {
+            // remove any < 4 minor and major branches for linkfield
+            if ($repo == 'silverstripe-linkfield') {
+                $minorBranches = array_filter($minorBranches, function ($branch) {
+                    return (int) $branch >= 4;
+                });
+                $majorBranches = array_filter($majorBranches, function ($branch) {
+                    return (int) $branch >= 4;
+                });
+                // hack for linkfield which only has a `4` branch while it's in dev
+                // this is done so that `$minorBranches[0]` below passes
+                if (count($minorBranches) == 0) {
+                    $minorBranches = ['4.0'];
+                }
+            }
+            if (count($minorBranches) == 0) {
                 continue;
             }
 
-            $nextPatBrn = $branches[0];
+            $nextPatBrn = $minorBranches[0];
             $nextMinBrn = substr($nextPatBrn, 0, 1);
+            $nextMajBrn = $majorBranches[0] != $nextMinBrn ? $majorBranches[0] : '';
 
             $blankMu = 'nothing';
-            // 'cm' = current major, 'xm' = cross major, 'pm' = prev major
-            foreach (['cm', 'xm', 'pm'] as $prefix) {
+            // 'nm' = next major,
+            // 'xnm' = cross next major
+            // 'cm' = current major
+            // 'xm' = cross major
+            // 'pm' = prev major
+            foreach (['nm', 'xnm', 'cm', 'xm', 'pm'] as $prefix) {
                 // cross major
-                if ($prefix == 'xm') {
+                if ($prefix == 'xnm') {
                     $arr["|"] = '';
                     $arr["{$prefix}Mu"] = $blankMu;
-                    $arr["{$prefix}CmpUrl"] = '';
+                    // $arr["{$prefix}CmpUrl"] = '';
+                    if ($nextMajBrn == '') {
+                        continue;
+                    }
+                    $mergeInto = $nextMajBrn;
+                    $path = "/repos/$account/$repo/compare/$nextMajBrn...$nextMinBrn";
+                    $json = $requester->fetch($path, '', $account, $repo, $refetch);
+                    $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
+                    $cmp = $needsMergeUp
+                        ? "https://github.com/$account/$repo/compare/$nextMajBrn...$nextMinBrn:needs-merge-up"
+                        : '';
+                    $arr["{$prefix}Mu"] = $needsMergeUp ? $cmp : 'up-to-date';
+                    continue;
+                }
+                if ($prefix == 'xm') {
+                    $arr["| "] = '';
+                    $arr["{$prefix}Mu"] = $blankMu;
                     // merge into next-patch if it ends in *.0 - e.g. 5.0...4
                     // else merge into prev-minor e.g. - e.g. 5.1...4, if next-patch is 5.2
-                    $mergeInto = $branches[0];
+                    $mergeInto = $minorBranches[0];
                     if (!preg_match('#\.0$#', $mergeInto)) {
                         $mergeInto -= 0.1;
                         $mergeInto = sprintf('%.1f', $mergeInto);
                     }
                     $lastMajor = $nextMinBrn - 1;
-                    $bs = array_filter($branches, function ($branch) use ($lastMajor) {
+                    $bs = array_filter($minorBranches, function ($branch) use ($lastMajor) {
                         return substr($branch, 0, 1) == $lastMajor;
                     });
                     $bs = array_values($bs);
@@ -142,58 +188,61 @@ EOT;
                     $path = "/repos/$account/$repo/compare/$mergeInto...$lastMajor";
                     $json = $requester->fetch($path, '', $account, $repo, $refetch);
                     $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
-                    $arr["{$prefix}Mu"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                    $arr["{$prefix}CmpUrl"] = $needsMergeUp
-                        ? "https://github.com/$account/$repo/compare/$mergeInto...$lastMajor"
+                    $cmp = $needsMergeUp
+                        ? "https://github.com/$account/$repo/compare/$mergeInto...$lastMajor:needs-merge-up"
                         : '';
+                    $arr["{$prefix}Mu"] = $needsMergeUp ? $cmp : 'up-to-date';
                     continue;
                 }
-                // current major, previous major
-                if ($prefix == 'cm') {
-                    $arr["| "] = '';
+                // next major, current major, previous major
+                if ($prefix == 'nm') {
+                    $arr["nmBrn"] = $nextMajBrn ? "{$nextMajBrn}.x-dev" : '';
                 }
-                if ($prefix == 'pm') {
-                    $nextMinBrn = $nextMinBrn - 1;
-                    $arr["|  "] = '';
-                }
-                $arr["{$prefix}NextMinBrn"] = '';
-                $arr["{$prefix}Mu"] = $blankMu;
-                $arr["{$prefix}CmpUrl"] = '';
-                $arr["{$prefix}NextPatBrn"] = '';
-                $arr["{$prefix}MuPrevMin"] = '';
-                $arr["{$prefix}CmpUrlPrevMin"] = '';
-                $arr["{$prefix}PrevMinBrn"] = '';
-                $bs = array_filter($branches, function ($branch) use ($nextMinBrn) {
-                    return substr($branch, 0, 1) == $nextMinBrn;
-                });
-                $bs = array_values($bs);
-                if (count($bs) == 0) {
-                    continue;
-                }
-                $nextPatBrn = $bs[0];
-                $prevMinBrn = count($bs) > 1 ? $bs[1] : '';
+                if ($prefix == 'cm' || $prefix == 'pm') {
+                    if ($prefix == 'cm') {
+                        $arr["|   "] = '';
+                    }
+                    if ($prefix == 'pm') {
+                        $nextMinBrn = $nextMinBrn - 1;
+                        $arr["|    "] = '';
+                    }
+                    $arr["{$prefix}NextMinBrn"] = '';
+                    $arr["{$prefix}Mu"] = $blankMu;
+                    $arr["{$prefix}NextPatBrn"] = '';
+                    $arr["{$prefix}MuPrevMin"] = '';
+                    $arr["{$prefix}PrevMinBrn"] = '';
+                    $bs = array_filter($minorBranches, function ($branch) use ($nextMinBrn) {
+                        return substr($branch, 0, 1) == $nextMinBrn;
+                    });
+                    $bs = array_values($bs);
+                    if (count($bs) == 0) {
+                        continue;
+                    }
+                    $nextPatBrn = $bs[0];
+                    $prevMinBrn = count($bs) > 1 ? $bs[1] : '';
 
-                // 4...4.12
-                $arr["{$prefix}NextMinBrn"] = "{$nextMinBrn}.x-dev";
-                $path = "/repos/$account/$repo/compare/$nextMinBrn...$nextPatBrn";
-                $json = $requester->fetch($path, '', $account, $repo, $refetch);
-                $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
-                $arr["{$prefix}Mu"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                $arr["{$prefix}CmpUrl"] = $needsMergeUp
-                    ? "https://github.com/$account/$repo/compare/$nextMinBrn...$nextPatBrn"
-                    : '';
-                $arr["{$prefix}NextPatBrn"] = "{$nextPatBrn}.x-dev";
-
-                // 4.12...4.11
-                if ($prevMinBrn) {
-                    $path = "/repos/$account/$repo/compare/$nextPatBrn...$prevMinBrn";
+                    // 4...4.12
+                    $arr["{$prefix}NextMinBrn"] = "{$nextMinBrn}.x-dev";
+                    $path = "/repos/$account/$repo/compare/$nextMinBrn...$nextPatBrn";
                     $json = $requester->fetch($path, '', $account, $repo, $refetch);
                     $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
-                    $arr["{$prefix}MuPrevMin"] = $needsMergeUp ? 'needs-merge-up' : 'up-to-date';
-                    $arr["{$prefix}CmpUrlPrevMin"] = $needsMergeUp
-                        ? "https://github.com/$account/$repo/compare/$nextPatBrn...$prevMinBrn"
+                    $cmp = $needsMergeUp
+                        ? "https://github.com/$account/$repo/compare/$nextMinBrn...$nextPatBrn:needs-merge-up"
                         : '';
-                    $arr["{$prefix}PrevMinBrn"] = "{$prevMinBrn}.x-dev";
+                    $arr["{$prefix}Mu"] = $needsMergeUp ? $cmp : 'up-to-date';
+                    $arr["{$prefix}NextPatBrn"] = "{$nextPatBrn}.x-dev";
+
+                    // 4.12...4.11
+                    if ($prevMinBrn) {
+                        $path = "/repos/$account/$repo/compare/$nextPatBrn...$prevMinBrn";
+                        $json = $requester->fetch($path, '', $account, $repo, $refetch);
+                        $needsMergeUp = ($json->root->ahead_by ?? 0) > 0;
+                        $cmp = $needsMergeUp
+                            ? "https://github.com/$account/$repo/compare/$nextPatBrn...$prevMinBrn:needs-merge-up"
+                            : '';
+                        $arr["{$prefix}MuPrevMin"] = $needsMergeUp ? $cmp : 'up-to-date';
+                        $arr["{$prefix}PrevMinBrn"] = "{$prevMinBrn}.x-dev";
+                    }
                 }
             }
             // get default branch
