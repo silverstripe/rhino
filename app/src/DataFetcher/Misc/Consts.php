@@ -183,7 +183,6 @@ class Consts
                 'MinkFacebookWebDriver',
                 'recipe-testing',
                 'silverstripe-behat-extension',
-                'silverstripe-serve',
                 'silverstripe-graphql-devtools',
                 'silverstripe-testsession',
                 'webpack-config',
