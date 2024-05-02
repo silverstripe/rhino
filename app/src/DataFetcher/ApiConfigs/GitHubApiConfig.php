@@ -53,7 +53,7 @@ class GitHubApiConfig implements ApiConfigInterface
             $off = $offset ? "{$op}{$offset}" : '';
             return "{$domain}/{$remotePath}{$off}";
         } else {
-            $off = $offset ? "{$op}{$offset}" : '';
+            $off = $offset ? "&{$offset}" : '';
             return "{$domain}/{$remotePath}{$op}per_page=100{$off}";
         }
     }
