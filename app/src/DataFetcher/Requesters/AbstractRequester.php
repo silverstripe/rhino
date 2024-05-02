@@ -49,11 +49,11 @@ abstract class AbstractRequester implements TypeInterface
             $apiData->delete();
         } elseif ($apiData) {
             $ucType = strtoupper($this->getType());
-            Logger::singleton()->log("Use local data for {$logStr}");
+            Logger::singleton()->log("Using local data for {$logStr}");
             return $this->buildResponse($apiData);
         }
 
-        Logger::singleton()->log("Fetch remote data for {$logStr}");
+        Logger::singleton()->log("Fetching remote data for {$logStr}");
         $json = $this->fetchDataFromApi($path, $postBody);
         if (strtolower($json) === 'null') {
             $json = null;
@@ -64,6 +64,55 @@ abstract class AbstractRequester implements TypeInterface
         $apiData->write();
 
         return $this->buildResponse($apiData);
+    }
+
+    public function fetchFile(
+        string $account,
+        string $repo,
+        string $branch,
+        string $filePath,
+        bool $refetch
+    ): mixed {
+        $fetchUrl = "https://raw.githubusercontent.com/$account/$repo/$branch/$filePath";
+
+        $data = [
+            'Api' => $this->apiConfig->getType(),
+            'Requester' => $this->getType(),
+            'Path' => $fetchUrl,
+            'PostBodyHash' => '',
+            'Account' => $account,
+            'Repo' => $repo,
+        ];
+        $apiData = ApiData::get()->filter($data)->first();
+
+        if ($refetch && $apiData) {
+            $apiData->delete();
+        } elseif ($apiData) {
+            Logger::singleton()->log("Using local data for {$fetchUrl}");
+            return str_ends_with($fetchUrl, '.json') ? json_decode($apiData->ResponseBody) : $apiData->ResponseBody;
+        }
+
+        Logger::singleton()->log("Fetching remote data for {$fetchUrl}");
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $fetchUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $result = curl_exec($ch);
+        $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($responseCode !== 200) {
+            if ($responseCode !== 404) {
+                Logger::singleton()->log("Error fetching file: $responseCode");
+            }
+            return null;
+        }
+
+        $data['ResponseBody'] = $result;
+        $apiData = ApiData::create()->update($data);
+        $apiData->write();
+        return str_ends_with($fetchUrl, '.json') ? json_decode($result) : $result;
     }
 
     abstract protected function fetchDataFromApi(string $path, string $postBody = ''): string;
