@@ -111,7 +111,6 @@ class Consts
                 'silverstripe-security-extensions',
                 // 'silverstripe-upgrader',
                 'silverstripe-versionfeed', // not in commercially supported list, though is in cwp
-                'sspak',
                 'vendor-plugin',
                 'developer-docs',
                 '.github',
