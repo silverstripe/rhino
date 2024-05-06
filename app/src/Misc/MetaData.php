@@ -45,7 +45,6 @@ class MetaData
         'silverstripe' => [
             'cwp-starter-theme', // watea-theme uses shared config
             'silverstripe-upgrader',
-            'sspak',
             'MinkFacebookWebDriver'
         ]
     ];
