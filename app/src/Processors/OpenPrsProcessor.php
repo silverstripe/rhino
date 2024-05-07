@@ -7,10 +7,10 @@ use App\Utils\DateTimeUtil;
 use App\Utils\MiscUtil;
 use App\Utils\PullRequestUtil;
 use App\DataFetcher\Apis\GitHubApiConfig;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Misc\Logger;
 use App\DataFetcher\Requesters\GraphQLRequester;
 use stdClass;
+use App\Misc\SupportedModulesManager;
 
 class OpenPrsProcessor extends AbstractProcessor
 {
@@ -50,7 +50,8 @@ EOT;
     {
         $apiConfig = new GitHubApiConfig();
         $requester = new GraphQLRequester($apiConfig);
-        $modules = Consts::MODULES;
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
     
         $rows = [];
 
