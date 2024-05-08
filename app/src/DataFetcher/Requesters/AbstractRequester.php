@@ -3,7 +3,6 @@
 namespace App\DataFetcher\Requesters;
 
 use App\DataFetcher\Apis\ApiConfigInterface;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Models\ApiData;
 use App\DataFetcher\Misc\Logger;
 use App\DataFetcher\Interfaces\TypeInterface;
@@ -119,7 +118,7 @@ abstract class AbstractRequester implements TypeInterface
 
     protected function getMethod(string $postBody): string
     {
-        return $postBody ? Consts::METHOD_POST : Consts::METHOD_GET;
+        return $postBody ? 'post' : 'get';
     }
 
     protected function waitUntilCanFetch()

@@ -6,8 +6,8 @@ use App\Misc\MetaData;
 use App\Utils\DateTimeUtil;
 use App\Utils\MiscUtil;
 use App\DataFetcher\Apis\GitHubApiConfig;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Requesters\RestRequester;
+use App\Misc\SupportedModulesManager;
 
 class IssuesProcessor extends AbstractProcessor
 {
@@ -47,7 +47,8 @@ EOT;
     {
         $apiConfig = new GitHubApiConfig();
         $requester = new RestRequester($apiConfig);
-        $modules = Consts::MODULES;
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
     
         $rows = [];
         

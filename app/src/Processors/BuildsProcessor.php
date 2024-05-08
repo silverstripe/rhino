@@ -3,8 +3,8 @@
 namespace App\Processors;
 
 use App\DataFetcher\Apis\GitHubApiConfig;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Requesters\RestRequester;
+use App\Misc\SupportedModulesManager;
 
 class BuildsProcessor extends AbstractProcessor
 {
@@ -44,7 +44,8 @@ EOT;
 
     public function process(bool $refetch): array
     {
-        $modules = Consts::MODULES;
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
 
         $apiConfig = new GitHubApiConfig();
         $requester = new RestRequester($apiConfig);
@@ -53,14 +54,14 @@ EOT;
         foreach (['regular', 'tooling'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
-                    $varsList[] = [$account, $repo];
+                    $varsList[] = [$account, $repo, $moduleType];
                 }
             }
         }
 
         $rows = [];
         foreach ($varsList as $vars) {
-            list($account, $repo) = $vars;
+            list($account, $repo, $moduleType) = $vars;
 
             if ($repo == 'silverstripe-frameworktest') {
                 continue;
@@ -100,20 +101,6 @@ EOT;
             });
             $minorBranches = array_reverse($minorBranches);
             $majorBranches = array_reverse($majorBranches);
-            // remove any < 4 minor and major branches for linkfield
-            if ($repo == 'silverstripe-linkfield') {
-                $minorBranches = array_filter($minorBranches, function ($branch) {
-                    return (int) $branch >= 4;
-                });
-                $majorBranches = array_filter($majorBranches, function ($branch) {
-                    return (int) $branch >= 4;
-                });
-                // hack for linkfield which only has a `4` branch while it's in dev
-                // this is done so that `$minorBranches[0]` below passes
-                if (count($minorBranches) == 0) {
-                    $minorBranches = ['4.0'];
-                }
-            }
             $nextPatBrn = '';
             $nextMinBrn = '';
             $pmMinBrn = '';
@@ -151,20 +138,22 @@ EOT;
                 }
             };
 
-            // remove any < 4 branches for linkfield
-            // note: this is not duplicated code from the other silverstripe-linkfield conditional above
-            if ($repo == 'silverstripe-linkfield') {
-                if ($pmMinBrn == '3') {
-                    $pmMinBrn = '';
+            // Don't show unsupported branches for regular repos
+            if ($moduleType == 'regular') {
+                if ($nextMajBrn && !$manager->getMajorBranchIsSupported($repo, $nextMajBrn)) {
+                    $nextMajBrn = '';
                 }
-            }
-
-            $skipCurrentMajor = false;
-            if (in_array($repo, [
-                'silverstripe-postgresql',
-                'silverstripe-sqlite3'
-            ])) {
-                $skipCurrentMajor = true;
+                if ($nextMinBrn && !$manager->getMajorBranchIsSupported($repo, $nextMinBrn)) {
+                    $nextMinBrn = '';
+                    $nextPatBrn = '';
+                }
+                if ($pmMinBrn) {
+                    $previousMajor = explode('.', $pmMinBrn)[0];
+                    if (!$manager->getMajorBranchIsSupported($repo, $previousMajor)) {
+                        $pmMinBrn = '';
+                        $pmPatBrn = '';
+                    }
+                }
             }
 
             $runName = 'CI';
@@ -178,27 +167,27 @@ EOT;
 
                 // next major
                 'nextMajBrn' => $nextMajBrn ? ($nextMajBrn . '.x-dev') : '',
-                'nextMajGhaStat' => $nextMajBrn == ''
-                    ? $this->buildBlankBadge()
-                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMajBrn, $runName),
+                'nextMajGhaStat' => $nextMajBrn
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMajBrn, $runName)
+                    : $this->buildBlankBadge(),
 
                 // current major
                 '| ' => '',
-                'nextMinBrn' => $skipCurrentMajor ? '' : $nextMinBrn . '.x-dev',
-                'nextMinGhaStat' => $skipCurrentMajor
-                    ? $this->buildBlankBadge()
-                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMinBrn, $runName),
-                'nextPatBrn' => $skipCurrentMajor ? '' : $nextPatBrn . '.x-dev',
-                'nextPatGhaStat' => $skipCurrentMajor
-                    ? $this->buildBlankBadge()
-                    : $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextPatBrn, $runName),
+                'nextMinBrn' => $nextMinBrn ? ($nextMinBrn . '.x-dev') : '',
+                'nextMinGhaStat' => $nextMinBrn
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextMinBrn, $runName)
+                    : $this->buildBlankBadge(),
+                'nextPatBrn' => $nextPatBrn ? ($nextPatBrn . '.x-dev') : '',
+                'nextPatGhaStat' => $nextPatBrn
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextPatBrn, $runName)
+                    : $this->buildBlankBadge(),
 
                 // prev major
                 '|' => '',
 
                 'pmMinBrn' => $pmMinBrn ? ($pmMinBrn . '.x-dev') : '',
                 'pmMinGhaStat' => $pmMinBrn
-                    ? ($this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmMinBrn, $runName))
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmMinBrn, $runName)
                     : $this->buildBlankBadge(),
 
                 'pmPatBrn' => $pmPatBrn ? ($pmPatBrn . '.x-dev') : '',

@@ -3,11 +3,11 @@
 namespace App\Processors;
 
 use App\DataFetcher\Apis\GitHubApiConfig;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Requesters\AbstractRequester;
 use App\DataFetcher\Requesters\RestRequester;
 use App\Utils\DateTimeUtil;
 use stdClass;
+use App\Misc\SupportedModulesManager;
 
 class ReleasesProcessor extends AbstractProcessor
 {
@@ -85,7 +85,8 @@ EOT;
 
     private function deriveData(): array
     {
-        $modules = Consts::MODULES;
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
         $rows = [];
 
         $varsList = [];

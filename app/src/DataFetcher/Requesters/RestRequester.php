@@ -2,7 +2,6 @@
 
 namespace App\DataFetcher\Requesters;
 
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Misc\Logger;
 
 class RestRequester extends AbstractRequester
@@ -29,7 +28,7 @@ class RestRequester extends AbstractRequester
             $url = $apiConfig->deriveUrl($path, $offset);
             Logger::singleton()->log("REST {$ucMethod} {$url}");
             curl_setopt($ch, CURLOPT_URL, $url);
-            if ($method == Consts::METHOD_POST) {
+            if (strtolower($method) == 'post') {
                 curl_setopt($ch, CURLOPT_POST, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $postBody);
             }

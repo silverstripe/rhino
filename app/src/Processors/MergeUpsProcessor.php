@@ -3,11 +3,11 @@
 namespace App\Processors;
 
 use App\DataFetcher\Apis\GitHubApiConfig;
-use App\DataFetcher\Misc\Consts;
 use App\DataFetcher\Requesters\AbstractRequester;
 use App\DataFetcher\Requesters\RestRequester;
 use SilverStripe\SupportedModules\BranchLogic;
 use SilverStripe\SupportedModules\MetaData;
+use App\Misc\SupportedModulesManager;
 
 class MergeUpsProcessor extends AbstractProcessor
 {
@@ -64,7 +64,8 @@ EOT;
     {
         $apiConfig = new GitHubApiConfig();
         $requester = new RestRequester($apiConfig);
-        $modules = Consts::MODULES;
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
 
         $repoList = [];
         foreach (['regular', 'tooling'] as $moduleType) {
