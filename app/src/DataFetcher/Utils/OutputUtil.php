@@ -63,6 +63,10 @@ class OutputUtil
         preg_match_all($rx, $html, $m);
         foreach ($m[0] as $url) {
             $href = trim($url, '><');
+            // don't hyperlink repos such as doc.silverstripe.org
+            if (preg_match('#^[a-z]+\.silverstripe\.org$#', $href)) {
+                continue;
+            }
             $extraText = '';
             // hack for MergeUpsProcessor
             if (strpos($href, ':needs-merge-up') !== false) {
