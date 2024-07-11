@@ -6,23 +6,19 @@ class MetaData
 {
     public const TEAMS = [
         'product' => [
-            'maxime-rainville',
             'emteknetnz',
             'GuySartorelli',
-            'sabina-talipova',
         ],
         'core-committers' => [
             'sminnee',
             'wilr',
             'chillu',
+            'maxime-rainville',
             'michalkleiner',
             'Cheddam',
-            'dhensby',
             'unclecheese',
             'madmatt',
             'kinglozzer',
-            'ScopeyNZ',
-            'Cheddam',
         ],
         'bot' => [
             'github-actions',
