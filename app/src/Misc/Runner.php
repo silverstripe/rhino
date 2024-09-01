@@ -64,9 +64,8 @@ class Runner
     {
         // sort is used for column sorting
         // status is used for column filtering
-        $cl = strpos($href, 'travis') !== false ? 'travis' : 'gha';
         $a = <<<EOT
-            <div class="status-badge $cl">
+            <div class="status-badge gha">
                 <div class="metadata">
                     <span class="metadata-sort">{$sort}</span>
                     <span class="metadata-status">{$status}</span>

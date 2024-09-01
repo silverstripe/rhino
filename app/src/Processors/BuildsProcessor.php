@@ -20,7 +20,7 @@ class BuildsProcessor extends AbstractProcessor
 
     public function getHtmlTableScript(): string
     {
-        return $this->getTravisBadgeScript() . <<<EOT
+        return <<<EOT
             (function() {
 
                 // sort by nextMinGhaStat desc
