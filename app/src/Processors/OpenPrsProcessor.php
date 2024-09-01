@@ -52,7 +52,7 @@ EOT;
         $requester = new GraphQLRequester($apiConfig);
         $manager = new SupportedModulesManager();
         $modules = $manager->getModules();
-    
+
         $rows = [];
 
         $varsList = [];
@@ -182,13 +182,12 @@ EOT;
                 'deletions' => $node->deletions,
             ];
         }
-        
+
         // author very occasionally null, possibly user deleted from github
         $author = $pr->author->login ?? '';
-    
+
         // ci tool red
         $ciToolRed = [
-            'travis' => false,
             'scrutinizer' => false,
             'codecov' => false,
         ];
@@ -204,10 +203,10 @@ EOT;
                 }
             }
         }
-    
+
         // merge conflicts
         $mrgConflicts = $pr->mergeable == 'CONFLICTING';
-        
+
         // approved / change requeted
         $a = [];
         foreach ($pr->reviews->nodes as $review) {
@@ -221,7 +220,7 @@ EOT;
         $changesReq = !empty(array_filter($a, function ($v) {
             return $v == 'CHANGES_REQUESTED';
         }));
-        
+
         // last commit at
         // handle strange state with zero commits after force pushing
         // only happens on old closed branches
@@ -229,7 +228,7 @@ EOT;
         foreach ($pr->commits->nodes as $commit) {
             $lastCommitAt = $commit->commit->committedDate;
         }
-    
+
         // ask to close
         $authorType = MiscUtil::deriveUserType($author, MetaData::TEAMS);
 

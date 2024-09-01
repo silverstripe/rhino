@@ -42,7 +42,7 @@ class ReleasesProcessor extends AbstractProcessor
 
     public function getHtmlTableScript(): string
     {
-        return $this->getTravisBadgeScript() . <<<EOT
+        return <<<EOT
             (function() {
                 // convert changelog line break to <br>
                 var tds = document.getElementsByTagName('td');
@@ -94,6 +94,9 @@ EOT;
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
                     if (in_array("{$account}/{$repo}", self::EXCLUDE_MODULES)) {
+                        continue;
+                    }
+                    if (!$manager->canHaveReleases($repo)) {
                         continue;
                     }
                     $varsList[] = [$account, $repo];
@@ -184,7 +187,6 @@ EOT;
                     $branch = $minorBranch;
                 }
                 $compareLink = "https://github.com/{$account}/{$repo}/compare/{$tag}...{$branch}";
-                $buildBadge = $this->buildStatusBadge($account, $repo, $branch);
                 $newTag = $newTagData['newTag'];
                 if ($minorType == 'next') {
                     $newTag = $newTagData['changelog'] ? $tagList['nextMinor']['tag'] ?? '' : '';
@@ -193,7 +195,6 @@ EOT;
                 $row["{$minorType}_changelog"] = $newTagData['changelog'];
                 if ($newTag) {
                     $row["{$minorType}_compare"] = $compareLink;
-                    $row["{$minorType}_travis"] = $buildBadge;
                     $row["{$minorType}_warning"] = "Count non-merge commits in compare before release";
                     $row["{$minorType}_release"] = "https://github.com/{$account}/{$repo}/releases/new";
                 }
@@ -436,7 +437,7 @@ EOT;
     // TODO: Put this into PullRequestUtil
     private function isDevFile(stdClass $file): bool
     {
-        // possiblly should treat .travis.yml and .scrutinizer as 'tooling'
+        // possiblly should treat .scrutinizer as 'tooling'
         $path = $file->filename;
         $paths = [
             '.codeclimate.yml',
@@ -452,7 +453,6 @@ EOT;
             '.sass-lint.yml',
             '.scrutinizer.yml',
             '.ss-strorybook.js',
-            '.travis.yml',
             'behat.yml',
             'code-of-conduct.md',
             'contributing.md',

@@ -55,4 +55,18 @@ class SupportedModulesManager
         }
         return false;
     }
+
+    public function canHaveReleases(string $repo): bool
+    {
+        if (empty($this->cmsMajorToBranches)) {
+            $this->getModules();
+        }
+        $cmsMajorToBranches = $this->cmsMajorToBranches[$repo] ?? [];
+        foreach ($cmsMajorToBranches as $cmsMajor => $branches) {
+            if ($cmsMajor !== '*') {
+                return true;
+            }
+        }
+        return false;
+    }
 }
