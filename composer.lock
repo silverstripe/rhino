@@ -4333,12 +4333,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/silverstripe/supported-modules.git",
-                "reference": "e8f909b09e8be871dfac88e20f3ead1e99967192"
+                "reference": "36da2bba8b980bca01b0967bd86a347f592f59f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silverstripe/supported-modules/zipball/e8f909b09e8be871dfac88e20f3ead1e99967192",
-                "reference": "e8f909b09e8be871dfac88e20f3ead1e99967192",
+                "url": "https://api.github.com/repos/silverstripe/supported-modules/zipball/36da2bba8b980bca01b0967bd86a347f592f59f0",
+                "reference": "36da2bba8b980bca01b0967bd86a347f592f59f0",
                 "shasum": ""
             },
             "require": {
@@ -4357,12 +4357,15 @@
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
             "description": "Metadata about Silverstripe CMS supported modules and other repositories maintained by Silverstripe",
             "support": {
                 "issues": "https://github.com/silverstripe/supported-modules/issues",
                 "source": "https://github.com/silverstripe/supported-modules/tree/main"
             },
-            "time": "2024-05-16T21:00:50+00:00"
+            "time": "2025-03-27T02:56:33+00:00"
         },
         {
             "name": "silverstripe/totp-authenticator",
@@ -9007,18 +9010,18 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "silverstripe/recipe-plugin": 0,
-        "silverstripe/vendor-plugin": 0,
-        "silverstripe/recipe-cms": 0,
         "silverstripe/login-forms": 0,
-        "silverstripe/supported-modules": 20
+        "silverstripe/recipe-cms": 0,
+        "silverstripe/recipe-plugin": 0,
+        "silverstripe/supported-modules": 20,
+        "silverstripe/vendor-plugin": 0
     },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.1"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1"
     },
