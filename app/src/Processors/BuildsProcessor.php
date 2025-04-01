@@ -122,6 +122,7 @@ EOT;
                     continue;
                 }
             }
+
             // see if there are any branches that match the previous minor branch
             if (!empty(array_filter($minorBranches, function ($branch) use ($pmMinBrn) {
                 list($major,) = explode('.', $branch);
@@ -154,6 +155,14 @@ EOT;
                         $pmPatBrn = '';
                     }
                 }
+            }
+
+            // Create the previous major, previous minor branch
+            // e.g. 5.4.x-dev -> 5.3.x-dev
+            // This will be empty if the previous major, current minor branch ends in .0 e.g. 5.0.x-dev
+            $pmPrevMinBrn = '';
+            if ($pmPatBrn && preg_match('/\.[1-9][0-9]*$/', $pmPatBrn)) {
+                $pmPrevMinBrn = $pmPatBrn - 0.1;
             }
 
             $runName = 'CI';
@@ -195,8 +204,10 @@ EOT;
                     ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmPatBrn, $runName)
                     : $this->buildBlankBadge(),
 
-                'pmPrevMinBrn' => '',
-                'pmPrevMinGhaStat' => $this->buildBlankBadge(),
+                'pmPrevMinBrn' => $pmPrevMinBrn ? ($pmPrevMinBrn . '.x-dev') : '',
+                'pmPrevMinGhaStat' => $pmPrevMinBrn
+                    ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmPrevMinBrn, $runName)
+                    : $this->buildBlankBadge(),
             ];
 
             $rows[] = $row;
