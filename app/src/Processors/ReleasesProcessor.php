@@ -144,21 +144,16 @@ EOT;
                 'prev_release' => '',
             ];
 
-            if (self::LAST_MAJOR_SUPPORTED) {
-                $row['lastmaj_type'] = 'last-major';
-                $row['lastmaj_branch'] = $tagList['lastmajMinor']['minorBranch'] ?? '';
-                $row['lastmaj_latestTag'] = $tagList['lastmajMinor']['tag'] ?? '';
-                $row['lastmaj_newTag'] = '';
-                $row['lastmaj_changelog'] = '';
-                $row['lastmaj_compare'] = '';
-                $row['lastmaj_warning'] = '';
-                $row['lastmaj_release'] = '';
-            }
+            $row['lastmaj_type'] = 'last-major';
+            $row['lastmaj_branch'] = $tagList['lastmajMinor']['minorBranch'] ?? '';
+            $row['lastmaj_latestTag'] = $tagList['lastmajMinor']['tag'] ?? '';
+            $row['lastmaj_newTag'] = '';
+            $row['lastmaj_changelog'] = '';
+            $row['lastmaj_compare'] = '';
+            $row['lastmaj_warning'] = '';
+            $row['lastmaj_release'] = '';
 
-            $minorTypes = ['next', 'curr', 'prev'];
-            if (self::LAST_MAJOR_SUPPORTED) {
-                $minorTypes[] = 'lastmaj';
-            }
+            $minorTypes = ['next', 'curr', 'prev', 'lastmaj'];
             foreach ($minorTypes as $minorType) {
                 if (!isset($tagList["{$minorType}Minor"]['minorBranch'])) {
                     continue;
@@ -203,10 +198,7 @@ EOT;
         }
         // split minorTypes into seperate rows
         $newRows = [];
-        $minorTypes = ['next', 'curr', 'prev'];
-        if (self::LAST_MAJOR_SUPPORTED) {
-            $minorTypes[] = 'lastmaj';
-        }
+        $minorTypes = ['next', 'curr', 'prev', 'lastmaj'];
         $rx = '#^' . implode('_|', $minorTypes) . '_#';
         foreach ($rows as $row) {
             foreach ($minorTypes as $minorType) {
@@ -307,13 +299,12 @@ EOT;
                 $ret['prevMinor']['type'] = 'prev';
             }
         }
-        if (self::LAST_MAJOR_SUPPORTED) {
-            foreach ($minorBranches as $minorBranch) {
-                if ($minorBranch[0] == $major - 1) {
-                    $ret['lastmajMinor'] = $this->filterTagListObjs($objs, $minorBranch);
-                    $ret['lastmajMinor']['type'] = 'lastmaj';
-                    break;
-                }
+
+        foreach ($minorBranches as $minorBranch) {
+            if ($minorBranch[0] == $major - 1) {
+                $ret['lastmajMinor'] = $this->filterTagListObjs($objs, $minorBranch);
+                $ret['lastmajMinor']['type'] = 'lastmaj';
+                break;
             }
         }
         return $ret;
