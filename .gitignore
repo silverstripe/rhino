@@ -7,4 +7,5 @@
 /.graphql-generated/
 /public/_graphql/
 .vscode/
-.ddev/
+.ddev*/
+behat.yml

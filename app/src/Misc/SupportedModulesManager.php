@@ -29,10 +29,14 @@ class SupportedModulesManager
         ];
         foreach ($types as $category => $type) {
             foreach ($repoData[$category] as $module) {
+                $majorVersionMapping = $this->removeUnsupportedMappings($module['majorVersionMapping']);
+                if (empty($majorVersionMapping)) {
+                    continue;
+                }
                 [$account, $repo] = explode('/', $module['github']);
                 $this->modules[$type][$account] ??= [];
                 $this->modules[$type][$account][] = $repo;
-                $this->cmsMajorToBranches[$repo] = $module['majorVersionMapping'];
+                $this->cmsMajorToBranches[$repo] = $majorVersionMapping;
             }
         }
         return $this->modules;
@@ -68,5 +72,17 @@ class SupportedModulesManager
             }
         }
         return false;
+    }
+
+    private function removeUnsupportedMappings(array $majorVersionMapping): array
+    {
+        $newMapping = [];
+        foreach ($majorVersionMapping as $major => $map) {
+            if ($major !== '*' && $major < MetaData::LOWEST_SUPPORTED_CMS_MAJOR) {
+                continue;
+            }
+            $newMapping[$major] = $map;
+        }
+        return $newMapping;
     }
 }
