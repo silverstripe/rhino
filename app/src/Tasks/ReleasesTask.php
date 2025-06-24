@@ -2,20 +2,11 @@
 
 namespace App\Tasks;
 
-use App\Misc\Runner;
-use SilverStripe\Dev\BuildTask;
-
-class ReleasesTask extends BuildTask
+class ReleasesTask extends BaseTask
 {
-    protected $title = 'ReleasesTask';
+    protected string $title = 'ReleasesTask';
 
-    private static $segment = 'ReleasesTask';
+    protected static string $description = 'Fetch releases';
 
-    public function run($request)
-    {
-        // Intended as a dev task, so by default will not refetch
-        // Add refetch=1 to CLI call to get it to refetch
-        $refetch = (bool) $request->getVar('refetch');
-        Runner::singleton()->run('releases', $refetch);
-    }
+    protected string $type = 'releases';
 }

@@ -23,11 +23,14 @@ class Logger
         if (PHP_SAPI === 'cli') {
             // vendor/bin/sake dev/tasks
             echo rtrim($str, "\n") . "\n";
-        } elseif (Controller::has_curr()) {
-            $class = get_class(Controller::curr());
-            if ($class == TaskRunner::class) {
-                // http://website.test/dev/tasks/MyTask
-                echo "$str<br>\n";
+        } else {
+            $controller = Controller::curr();
+            if ($controller) {
+                $class = get_class(Controller::curr());
+                if ($class == TaskRunner::class) {
+                    // http://website.test/dev/tasks/MyTask
+                    echo "$str<br>\n";
+                }
             }
         }
     }

@@ -2,12 +2,12 @@
 
 namespace App\Pages;
 
+use PageController;
 use App\Processors\AbstractProcessor;
 use App\Utils\DateTimeUtil;
-use PageController;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Model\ArrayData;
+use SilverStripe\Model\List\ArrayList;
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use Symbiote\QueuedJobs\Services\QueuedJob;
 
