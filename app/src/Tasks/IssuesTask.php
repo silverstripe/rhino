@@ -2,20 +2,11 @@
 
 namespace App\Tasks;
 
-use App\Misc\Runner;
-use SilverStripe\Dev\BuildTask;
-
-class IssuesTask extends BuildTask
+class IssuesTask extends BaseTask
 {
-    protected $title = 'IssuesTask';
+    protected string $title = 'IssuesTask';
 
-    private static $segment = 'IssuesTask';
+    protected static string $description = 'Fetch GitHub issues';
 
-    public function run($request)
-    {
-        // Intended as a dev task, so by default will not refetch
-        // Add refetch=1 to CLI call to get it to refetch
-        $refetch = (bool) $request->getVar('refetch');
-        Runner::singleton()->run('issues', $refetch);
-    }
+    protected string $type = 'issues';
 }
