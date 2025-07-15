@@ -9,9 +9,7 @@
         "symbiote/silverstripe-queuedjobs": "^6",
         "silverstripe/totp-authenticator": "^6",
         "silverstripe/webauthn-authenticator": "^6",
-        "silverstripe/crontask": "^4",
-        "silverstripe/dynamodb": "^6",
-        "silverstripe/supported-modules": "^1 || ^2"
+        "silverstripe/supported-modules": "^2"
     },
     "require-dev": {
         "phpunit/phpunit": "^11"
