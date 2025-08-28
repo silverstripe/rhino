@@ -50,6 +50,8 @@ EOT;
         $apiConfig = new GitHubApiConfig();
         $requester = new RestRequester($apiConfig);
 
+        $latestMinorIsPreRelease = $this->getLatestMinorIsPreRelease($requester, $refetch);
+
         $varsList = [];
         foreach (['regular', 'tooling'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
@@ -103,12 +105,14 @@ EOT;
             $majorBranches = array_reverse($majorBranches);
             $nextPatBrn = '';
             $nextMinBrn = '';
+            $prevMinBrn = '';
             $pmMinBrn = '';
             $pmPatBrn = '';
             $currMajBrn = '';
             $nextMajBrn = '';
             if (count($minorBranches)) {
                 $nextPatBrn = count($minorBranches) ? $minorBranches[0] : ''; // 4.7
+                $prevMinBrn = str_ends_with($nextPatBrn, '.0') ? '' : number_format($nextPatBrn - 0.1, 1); // 4.6
                 $nextMinBrn = substr($nextPatBrn, 0, 1); // 4
                 $pmMinBrn = $nextMinBrn - 1; // 3
                 $currMajBrn = preg_replace($minorBrnRx, '$1', $nextPatBrn);
@@ -147,6 +151,7 @@ EOT;
                 if ($nextMinBrn && !$manager->getMajorBranchIsSupported($repo, $nextMinBrn)) {
                     $nextMinBrn = '';
                     $nextPatBrn = '';
+                    $prevMinBrn = '';
                 }
                 if ($pmMinBrn) {
                     $previousMajor = explode('.', $pmMinBrn)[0];
@@ -190,7 +195,18 @@ EOT;
                 'nextPatGhaStat' => $nextPatBrn
                     ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $nextPatBrn, $runName)
                     : $this->buildBlankBadge(),
+            ];
 
+            if ($latestMinorIsPreRelease) {
+                $row = array_merge($row, [
+                    'prevMinBrn' => $prevMinBrn ? ($prevMinBrn . '.x-dev') : '',
+                    'prevMinBrnStat' => $prevMinBrn
+                        ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $prevMinBrn, $runName)
+                        : $this->buildBlankBadge(),
+                ]);
+            }
+
+            $row = array_merge($row, [
                 // prev major
                 '|' => '',
 
@@ -208,10 +224,45 @@ EOT;
                 'pmPrevMinGhaStat' => $pmPrevMinBrn
                     ? $this->getGhaStatusBadge($requester, $refetch, $account, $repo, $pmPrevMinBrn, $runName)
                     : $this->buildBlankBadge(),
-            ];
+            ]);
 
             $rows[] = $row;
         }
         return $rows;
+    }
+
+    /**
+     * Whether the latest minor e.g. 6.1 is in a pre-release phase or not
+     * This is based on if there is a stable tag for the latest minor version of silverstripe/framework
+     */
+    private function getLatestMinorIsPreRelease(RestRequester $requester, bool $refetch)
+    {
+        $path = "/repos/silverstripe/silverstripe-framework/tags?paginate=0&per_page=100";
+        $json = $requester->fetch($path, '', 'silverstripe', 'silverstripe-framework', $refetch);
+        $minors = [];
+        foreach ($json->root ?? [] as $tag) {
+            $tagName = $tag->name;
+            if (preg_match('/^(\d+\.\d+)/', $tagName, $matches)) {
+                $minorVersion = $matches[1];
+                if (!isset($minors[$minorVersion])) {
+                    $minors[$minorVersion] = [
+                        'has_prerelease' => false,
+                        'has_stable' => false,
+                    ];
+                }
+                if (preg_match('#(alpha|beta|rc)#', $tagName)) {
+                    $minors[$minorVersion]['has_prerelease'] = true;
+                } else {
+                    $minors[$minorVersion]['has_stable'] = true;
+                }
+            }
+        }
+        $minorKeys = array_keys($minors);
+        usort($minorKeys, function ($a, $b) {
+            return version_compare($b, $a);
+        });
+        $latestMinorKey = $minorKeys[0];
+        $latestMinorInfo = $minors[$latestMinorKey];
+        return $latestMinorInfo['has_prerelease'] && !$latestMinorInfo['has_stable'];
     }
 }
