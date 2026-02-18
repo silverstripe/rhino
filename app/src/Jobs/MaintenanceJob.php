@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use DateTime;
-use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use App\DataFetcher\Jobs\AbstractLoggableJob;
 use App\DataFetcher\Models\ApiData;
 use SilverStripe\ORM\DB;
@@ -17,9 +16,6 @@ class MaintenanceJob extends AbstractLoggableJob
 
     public function processWithLogging(): void
     {
-        // remove broken jobs
-        QueuedJobDescriptor::get()->filter(['JobStatus' => 'Broken'])->removeAll();
-
         // remove old ApiData
         $date = new DateTime();
         $ts = strtotime('-1 week');
@@ -27,7 +23,11 @@ class MaintenanceJob extends AbstractLoggableJob
         $ids = ApiData::get()->filter([
             'Created:LessThan' => $date->format('Y-m-d')
         ])->column('ID');
-        if (!empty($ids)) {
+        if (empty($ids)) {
+            $this->addMessage('No ApiData records to delete');
+        } else {
+            $count = count($ids);
+            $this->addMessage("Deleting $count ApiData records");
             // use a raw query for performance
             $in = implode(',', $ids);
             DB::query("DELETE FROM ApiData WHERE ID IN ({$in});");
