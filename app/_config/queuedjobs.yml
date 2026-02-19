@@ -1,0 +1,32 @@
+---
+Name: rhino-queuedjobs-config
+---
+# Cleanup jobs that completed > 1 week
+Symbiote\QueuedJobs\Jobs\CleanupJob:
+  cleanup_method: 'age'
+  cleanup_value: 7
+  is_enabled: true
+
+# Display broken jobs that have been around for 1 week
+Symbiote\QueuedJobs\Controllers\QueuedJobsAdmin:
+  max_finished_jobs_age: 604800
+
+# Add CleanupJob automatically as a default job
+# This means if the job fails or is removed from the queue for whatever reason
+# it will be automatically recreated
+SilverStripe\Core\Injector\Injector:
+  Symbiote\QueuedJobs\Services\QueuedJobService:
+    properties:
+      defaultJobs:
+        CleanupJob:
+          type: 'Symbiote\QueuedJobs\Jobs\CleanupJob'
+          recreate: 1
+          filter:
+            JobTitle: 'Clean up old jobs from the database'
+          # This job takes no constructor args, but this is mandatory to create a default job
+          construct:
+            title: 'Clean up old jobs from the database'
+          # This defines when the first instance of the job will be run after being created.
+          # startTimeString will be parsed by strtotime()
+          startDateFormat: 'Y-m-d H:i:s'
+          startTimeString: 'now'
