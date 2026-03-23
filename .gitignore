@@ -9,3 +9,5 @@
 .vscode/
 .ddev*/
 behat.yml
+*.kate-swp
+.phpunit.result.cache

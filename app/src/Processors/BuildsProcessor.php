@@ -45,64 +45,21 @@ EOT;
     public function process(bool $refetch): array
     {
         $manager = new SupportedModulesManager();
-        $modules = $manager->getModules();
-
-        $apiConfig = new GitHubApiConfig();
-        $requester = new RestRequester($apiConfig);
+        $requester = $this->createRequester();
 
         $latestMinorIsPreRelease = $this->getLatestMinorIsPreRelease($requester, $refetch);
 
-        $varsList = [];
-        foreach (['regular', 'tooling'] as $moduleType) {
-            foreach ($modules[$moduleType] as $account => $repos) {
-                foreach ($repos as $repo) {
-                    $varsList[] = [$account, $repo, $moduleType];
-                }
-            }
-        }
-
         $rows = [];
-        foreach ($varsList as $vars) {
+        foreach ($this->getModuleVarsList() as $vars) {
             list($account, $repo, $moduleType) = $vars;
 
             if ($repo == 'silverstripe-frameworktest') {
                 continue;
             }
 
-            $minorBranches = [];
-            $majorBranches = [];
-            $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
-            $majorBrnRx = '#^([1-9])$#';
-            $path = "/repos/$account/$repo/branches?paginate=0&per_page=100";
-            $json = $requester->fetch($path, '', $account, $repo, $refetch);
-            foreach ($json->root ?? [] as $branch) {
-                if (!$branch) {
-                    continue;
-                }
-                $name = $branch->name;
-                if (preg_match($minorBrnRx, $name)) {
-                    $minorBranches[] = $name;
-                }
-                if (preg_match($majorBrnRx, $name)) {
-                    $majorBranches[] = $name;
-                }
-            }
-            usort($minorBranches, function ($a, $b) use ($minorBrnRx) {
-                preg_match($minorBrnRx, $a, $ma);
-                preg_match($minorBrnRx, $b, $mb);
-                $n = (int) $ma[1] <=> (int) $mb[1];
-                if ($n != 0) {
-                    return $n;
-                }
-                return (int) $ma[2] <=> (int) $mb[2];
-            });
-            usort($majorBranches, function ($a, $b) use ($majorBrnRx) {
-                preg_match($majorBrnRx, $a, $ma);
-                preg_match($majorBrnRx, $b, $mb);
-                return (int) $ma[1] <=> (int) $mb[1];
-            });
-            $minorBranches = array_reverse($minorBranches);
-            $majorBranches = array_reverse($majorBranches);
+            $branchData = $this->getRepositoryBranches($requester, $refetch, $account, $repo);
+            $minorBranches = $branchData['minorBranches'];
+            $majorBranches = $branchData['majorBranches'];
             $nextPatBrn = '';
             $nextMinBrn = '';
             $prevMinBrn = '';
@@ -115,7 +72,7 @@ EOT;
                 $prevMinBrn = str_ends_with($nextPatBrn, '.0') ? '' : number_format($nextPatBrn - 0.1, 1); // 4.6
                 $nextMinBrn = substr($nextPatBrn, 0, 1); // 4
                 $pmMinBrn = $nextMinBrn - 1; // 3
-                $currMajBrn = preg_replace($minorBrnRx, '$1', $nextPatBrn);
+                $currMajBrn = preg_replace('#^([1-9])\.([0-9]+)$#', '$1', $nextPatBrn);
                 if (count($majorBranches) && $currMajBrn != $majorBranches[0]) {
                     $nextMajBrn = $majorBranches[0]; // 5
                 }
@@ -128,10 +85,12 @@ EOT;
             }
 
             // see if there are any branches that match the previous minor branch
-            if (!empty(array_filter($minorBranches, function ($branch) use ($pmMinBrn) {
-                list($major,) = explode('.', $branch);
-                return $major == $pmMinBrn;
-            }))) {
+            if (
+                !empty(array_filter($minorBranches, function ($branch) use ($pmMinBrn) {
+                    list($major,) = explode('.', $branch);
+                    return $major == $pmMinBrn;
+                }))
+            ) {
                 foreach ($minorBranches as $branch) {
                     if (strpos($branch, "$pmMinBrn.") === 0) {
                         if ($pmPatBrn == '') {
@@ -170,10 +129,7 @@ EOT;
                 $pmPrevMinBrn = $pmPatBrn - 0.1;
             }
 
-            $runName = 'CI';
-            if (strpos($repo, 'gha-') === 0) {
-                $runName = 'Action CI';
-            }
+            $runName = $this->getRunName($repo);
 
             $row = [
                 'account' => $account,
@@ -229,6 +185,91 @@ EOT;
             $rows[] = $row;
         }
         return $rows;
+    }
+
+    /**
+     * Returns the list of [account, repo, moduleType] tuples for all supported modules.
+     */
+    protected function getModuleVarsList(): array
+    {
+        $manager = new SupportedModulesManager();
+        $modules = $manager->getModules();
+        $varsList = [];
+        foreach (['regular', 'tooling'] as $moduleType) {
+            foreach ($modules[$moduleType] as $account => $repos) {
+                foreach ($repos as $repo) {
+                    $varsList[] = [$account, $repo, $moduleType];
+                }
+            }
+        }
+        return array_values($varsList);
+    }
+
+    /**
+     * Creates the GitHub REST requester.
+     */
+    protected function createRequester(): RestRequester
+    {
+        $apiConfig = new GitHubApiConfig();
+        return new RestRequester($apiConfig);
+    }
+
+    /**
+     * Fetches and returns the sorted minor and major branches for a given repo from the GitHub API.
+     */
+    protected function getRepositoryBranches(
+        RestRequester $requester,
+        bool $refetch,
+        string $account,
+        string $repo
+    ): array {
+        $minorBranches = [];
+        $majorBranches = [];
+        $minorBrnRx = '#^([1-9])\.([0-9]+)$#';
+        $majorBrnRx = '#^([1-9])$#';
+        $path = "/repos/$account/$repo/branches?paginate=0&per_page=100";
+        $json = $requester->fetch($path, '', $account, $repo, $refetch);
+        foreach ($json->root ?? [] as $branch) {
+            if (!$branch) {
+                continue;
+            }
+            $name = $branch->name;
+            if (preg_match($minorBrnRx, $name)) {
+                $minorBranches[] = $name;
+            }
+            if (preg_match($majorBrnRx, $name)) {
+                $majorBranches[] = $name;
+            }
+        }
+        usort($minorBranches, function (string $a, string $b) use ($minorBrnRx): int {
+            preg_match($minorBrnRx, $a, $ma);
+            preg_match($minorBrnRx, $b, $mb);
+            $n = (int) $ma[1] <=> (int) $mb[1];
+            if ($n !== 0) {
+                return $n;
+            }
+            return (int) $ma[2] <=> (int) $mb[2];
+        });
+        usort($majorBranches, function (string $a, string $b) use ($majorBrnRx): int {
+            preg_match($majorBrnRx, $a, $ma);
+            preg_match($majorBrnRx, $b, $mb);
+            return (int) $ma[1] <=> (int) $mb[1];
+        });
+        return [
+            'minorBranches' => array_reverse($minorBranches),
+            'majorBranches' => array_reverse($majorBranches),
+        ];
+    }
+
+    /**
+     * Returns the GHA workflow run name for a repo ('Action CI' for gha- repos, otherwise 'CI').
+     */
+    protected function getRunName(string $repo): string
+    {
+        if (strpos($repo, 'gha-') === 0) {
+            return 'Action CI';
+        }
+        return 'CI';
     }
 
     /**

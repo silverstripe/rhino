@@ -20,7 +20,7 @@ abstract class BaseTask extends BuildTask
 
     public static function getName(): string
     {
-        $shortName = ClassInfo::shortName(new static);
+        $shortName = ClassInfo::shortName(new static());
         return "tasks:$shortName";
     }
 

@@ -14,6 +14,14 @@ abstract class AbstractProcessor
 
     abstract public function process(bool $refetch): array;
 
+    /**
+     * Returns the fully-qualified job class name used to queue this processor.
+     */
+    public function getJobImplementation(): string
+    {
+        return str_replace('Processor', 'Job', get_class($this));
+    }
+
     protected function buildGhaStatusBadge(
         string $account,
         string $repo,

@@ -49,9 +49,9 @@ EOT;
         $requester = new RestRequester($apiConfig);
         $manager = new SupportedModulesManager();
         $modules = $manager->getModules();
-    
+
         $rows = [];
-        
+
         $varsList = [];
         foreach (['regular', 'tooling'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
@@ -74,7 +74,7 @@ EOT;
                     continue;
                 }
                 $labels = empty($issue->labels) ? [] : $issue->labels;
-                
+
                 $row = [
                     'title' => $issue->title,
                     'account' => $account,
