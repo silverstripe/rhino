@@ -85,11 +85,19 @@ EOT;
             $defaultBranch = $json->root->default_branch;
             $repoData = MetaData::getMetaDataForRepository("$account/$repo");
             $composerJson = $requester->fetchFile($account, $repo, $defaultBranch, 'composer.json', $refetch);
-            $branchesJson = $requester->fetch("/repos/$account/$repo/branches", '', $account, $repo, $refetch)->root ?? [];
+            $branchesJson = $requester->fetch("/repos/$account/$repo/branches", '', $account, $repo, $refetch)->root
+                ?? [];
             $allRepoBranches = array_map(fn($x) => $x->name, $branchesJson);
             $tagsJson = $requester->fetch("/repos/$account/$repo/tags", '', $account, $repo, $refetch)->root ?? [];
             $allRepoTags = array_map(fn($x) => $x->name, $tagsJson);
-            $branches = BranchLogic::getBranchesForMergeUp("$account/$repo", $repoData, $defaultBranch, $allRepoTags, $allRepoBranches, $composerJson);
+            $branches = BranchLogic::getBranchesForMergeUp(
+                "$account/$repo",
+                $repoData,
+                $defaultBranch,
+                $allRepoTags,
+                $allRepoBranches,
+                $composerJson
+            );
             if (empty($branches)) {
                 continue;
             }
@@ -102,12 +110,14 @@ EOT;
                 'Workflow status' => '',
             ];
 
-            // Check the highest major release represented in the branches, so we can display branches in the correct columns.
-            // If the default branch isn't the highest major branch for this repo, get the correct composer.json content.
+            // Check the highest major release represented in the branches, so we can display
+            // branches in the correct columns. If the default branch isn't the highest major
+            // branch for this repo, get the correct composer.json content.
             if ($majorBranches[0] > $defaultBranch) {
                 $composerJson = $requester->fetchFile($account, $repo, $majorBranches[0], 'composer.json', $refetch);
             }
-            $highestMajorForRepo = (int) BranchLogic::getCmsMajor($repoData, $majorBranches[0], $composerJson) ?: MetaData::HIGHEST_STABLE_CMS_MAJOR;
+            $highestMajorForRepo = (int) BranchLogic::getCmsMajor($repoData, $majorBranches[0], $composerJson)
+                ?: MetaData::HIGHEST_STABLE_CMS_MAJOR;
 
             $nothingToMerge = 'nothing';
             // 'nm' = next major,
@@ -123,7 +133,9 @@ EOT;
             $currentMajor = MetaData::HIGHEST_STABLE_CMS_MAJOR;
             $previousMajor = MetaData::HIGHEST_STABLE_CMS_MAJOR - 1;
 
-            foreach ([$nextMajor, "$currentMajor to $nextMajor", $currentMajor, "$previousMajor to $currentMajor", $previousMajor] as $type) {
+            $types = [$nextMajor, "$currentMajor to $nextMajor", $currentMajor, "$previousMajor to $currentMajor",
+                $previousMajor];
+            foreach ($types as $type) {
                 if (is_numeric($type)) {
                     $toMajor = $type;
                     $colPrefix = "CMS $type";
@@ -149,14 +161,23 @@ EOT;
                     // Add actual column data here
                     foreach ($columns as $col) {
                         // If we have no branches left, or the branch is the wrong type for this column, skip the column
-                        if (!isset($branches[$branchIndex]) || $col !== $colPrefix && !str_contains($col, 'NextMin') && !preg_match('/[0-9]+\.[0-9]/', $branches[$branchIndex])) {
+                        $wrongType = $col !== $colPrefix && !str_contains($col, 'NextMin')
+                            && !preg_match('/[0-9]+\.[0-9]/', $branches[$branchIndex]);
+                        if (!isset($branches[$branchIndex]) || $wrongType) {
                             $row[$col] = str_ends_with($col, 'status') ? $nothingToMerge : '';
                             continue;
                         }
                         if (str_ends_with($col, 'status')) {
                             $mergeFrom = $branches[$branchIndex];
                             $mergeInto = $branches[$branchIndex - 1];
-                            $row[$col] = $this->getMergeUpDetail($account, $repo, $mergeFrom, $mergeInto, $requester, $refetch);
+                            $row[$col] = $this->getMergeUpDetail(
+                                $account,
+                                $repo,
+                                $mergeFrom,
+                                $mergeInto,
+                                $requester,
+                                $refetch
+                            );
                         } else {
                             $row[$col] = $branches[$branchIndex] . '.x-dev';
                             $branchIndex++;
@@ -170,7 +191,14 @@ EOT;
                     } else {
                         $mergeFrom = $branches[$branchIndex];
                         $mergeInto = $branches[$branchIndex - 1];
-                        $row[$column] = $this->getMergeUpDetail($account, $repo, $mergeFrom, $mergeInto, $requester, $refetch);
+                        $row[$column] = $this->getMergeUpDetail(
+                            $account,
+                            $repo,
+                            $mergeFrom,
+                            $mergeInto,
+                            $requester,
+                            $refetch
+                        );
                     }
                     $row[$this->getSeparatorColumn($n)] = '';
                 }

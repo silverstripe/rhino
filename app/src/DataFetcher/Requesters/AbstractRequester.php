@@ -143,7 +143,7 @@ abstract class AbstractRequester implements TypeInterface
         if ($root === '') {
             $root = '""';
         }
-        $response = json_decode('{"root":'.$root.'}');
+        $response = json_decode('{"root":' . $root . '}');
         if ($response === null && json_last_error() !== JSON_ERROR_NONE) {
             throw new LogicException(json_last_error_msg());
         }

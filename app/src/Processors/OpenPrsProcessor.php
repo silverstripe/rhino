@@ -196,7 +196,8 @@ EOT;
                 // states are SUCCESS, ERROR, FAILURE, PENDING
                 // it's OK to treat PENDING as red, as sometimes ci tool gets stuck in a
                 // pending state, and 'pending' is not immediately actionable anyway
-                if (strpos(strtolower($context->context), $ci) !== false &&
+                if (
+                    strpos(strtolower($context->context), $ci) !== false &&
                     $context->state != 'SUCCESS'
                 ) {
                     $ciToolRed[$ci] = true;

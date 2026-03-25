@@ -80,7 +80,7 @@ class RhinoTablesPageController extends PageController
             return '';
         }
         $filter = [
-            'Implementation' => str_replace('Processor', 'Job', get_class($processor)),
+            'Implementation' => $processor->getJobImplementation(),
             'JobStatus' => $jobStatuses,
         ];
         $descriptor = QueuedJobDescriptor::get()->filter($filter)->sort('ID DESC')->limit(1)->first();

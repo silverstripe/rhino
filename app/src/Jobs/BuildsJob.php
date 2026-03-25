@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Misc\Runner;
 use App\DataFetcher\Jobs\AbstractLoggableJob;
+use App\Misc\BuildsPipeline;
 
 class BuildsJob extends AbstractLoggableJob
 {
@@ -15,7 +15,8 @@ class BuildsJob extends AbstractLoggableJob
     public function processWithLogging(): void
     {
         $refetch = true;
-        Runner::singleton()->run('builds', $refetch);
+        $pipeline = new BuildsPipeline();
+        $pipeline->run($refetch);
     }
 
     protected function getTimeMatrix(): array

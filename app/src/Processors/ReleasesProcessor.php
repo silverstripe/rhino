@@ -400,7 +400,8 @@ EOT;
                 $commit->commit->author->name ?? '',
                 substr($commit->sha, 0, 9)
             );
-            if (strpos($commitMessage, '* Merge pull request #') === 0 ||
+            if (
+                strpos($commitMessage, '* Merge pull request #') === 0 ||
                 strpos($commitMessage, "* Merge branch '") === 0
             ) {
                 continue;
@@ -416,10 +417,12 @@ EOT;
         $data['changelog'] = implode("\n", array_keys($arr));
 
         // hardcoded
-        if (preg_match(
-            '#(?s)^\* Update build status badge \(Steve Boyd\) - [a-z0-9]{9}$#',
-            str_replace("\n", '', $data['changelog'])
-        )) {
+        if (
+            preg_match(
+                '#(?s)^\* Update build status badge \(Steve Boyd\) - [a-z0-9]{9}$#',
+                str_replace("\n", '', $data['changelog'])
+            )
+        ) {
             $data['changelog'] = '';
         }
         return $data;

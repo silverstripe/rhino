@@ -52,7 +52,7 @@ class SupportedModulesManager
             if ($cmsMajor === '*') {
                 return true;
             }
-            if (in_array($majorBranch, $branches)) {
+            if (in_array($majorBranch, $branches, true)) {
                 return true;
                 break;
             }

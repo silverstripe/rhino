@@ -61,13 +61,13 @@ class PullRequestUtil
         $ext = pathinfo(strtolower($path), PATHINFO_EXTENSION);
         return in_array($ext, ['md']);
     }
-    
+
     private static function isImageFile(string $path): bool
     {
         $ext = pathinfo(strtolower($path), PATHINFO_EXTENSION);
         return in_array($ext, ['jpg', 'jpeg', 'gif', 'png']);
     }
-    
+
     private static function isConfigFile(string $path): bool
     {
         $b = preg_match('@lang/[A-Za-z]{2}.yml$@', $path);
@@ -83,7 +83,7 @@ class PullRequestUtil
             'webpack-vars.js'
         ]);
     }
-    
+
     private static function isDistFile(string $path): bool
     {
         $ext = pathinfo(strtolower($path), PATHINFO_EXTENSION);
@@ -91,7 +91,7 @@ class PullRequestUtil
             in_array($path, ['bundle.js', 'vendor.js']) ||
             in_array($ext, ['css']);
     }
-    
+
     private static function isTestFile(string $path): bool
     {
         return (bool) preg_match('/[a-z0-9]test\.php$/', $path);
