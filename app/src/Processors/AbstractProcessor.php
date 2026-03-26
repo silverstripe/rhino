@@ -66,11 +66,7 @@ abstract class AbstractProcessor
         string $runName
     ): string {
         // will retrieve the most recent completed run
-        $suffix = '';
-        if ($runName === 'Merge-up') {
-            $suffix = '&per_page=100';
-        }
-        $path = "/repos/$account/$repo/actions/runs?paginate=0&branch=$branch" . $suffix;
+        $path = "/repos/$account/$repo/actions/runs?paginate=0&per_page=100&branch=$branch";
         $json = $requester->fetch($path, '', $account, $repo, $refetch);
         $conclusion = 'no-status'; // not a real conclusion type, I made this up
         foreach ($json->root->workflow_runs ?? [] as $run) {

@@ -15,8 +15,18 @@ class FixedDateCmsBuildsManager extends CmsBuildsManager
      */
     public function __construct(
         private DateTimeImmutable $currentDate,
-        private array $locksteppedRepos = []
+        private array $locksteppedRepos = [],
+        private array $supportedModuleMajorMappings = []
     ) {
+    }
+
+    /**
+     * Prevents any real network call; raw-metadata-dependent paths are bypassed by the
+     * loadLocksteppedRepos / loadSupportedModuleMajorMappings overrides below.
+     */
+    protected function fetchAllRepositoryMetaData(bool $refetch): array
+    {
+        return [];
     }
 
     /**
@@ -27,6 +37,16 @@ class FixedDateCmsBuildsManager extends CmsBuildsManager
     protected function loadLocksteppedRepos(bool $refetch): array
     {
         return $this->locksteppedRepos;
+    }
+
+    /**
+     * Returns injected supported-module major mappings instead of calling the supported-modules API.
+     *
+     * @return array<string, array<string, string[]>>
+     */
+    protected function loadSupportedModuleMajorMappings(bool $refetch): array
+    {
+        return $this->supportedModuleMajorMappings;
     }
 
     /**

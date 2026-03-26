@@ -2,6 +2,7 @@
 
 namespace App\Tests\Misc;
 
+use App\Misc\CmsBuildsManager;
 use DateTimeImmutable;
 use SilverStripe\Dev\SapphireTest;
 
@@ -103,6 +104,99 @@ PHP2,
         $repos = $manager->getVisibleRepoNames();
         $this->assertContains('silverstripe-admin', $repos);
         $this->assertContains('silverstripe-staticpublishqueue', $repos);
+    }
+
+    public function testSupportedModuleMajorMappingsProvideFallbackVisibilityAndBranchMappings(): void
+    {
+        $manager = new FixedDateCmsBuildsManager(
+            new DateTimeImmutable('2026-03-23 Pacific/Auckland'),
+            $this->getDefaultLocksteppedRepos(),
+            [
+                'silverstripe-config' => [
+                    '5' => ['2'],
+                    '6' => ['3'],
+                ],
+                'startup-theme' => [
+                    '6' => ['1'],
+                ],
+                'legacy-only-module' => [
+                    '4' => ['9'],
+                ],
+            ]
+        );
+        $manager->load(new ArrayRequester($this->getFiles()), false);
+
+        $repos = $manager->getVisibleRepoNames();
+        $this->assertContains('silverstripe-config', $repos);
+        $this->assertContains('startup-theme', $repos);
+        $this->assertNotContains('legacy-only-module', $repos);
+
+        $this->assertSame(['3'], $manager->getMappedMinorBranches('silverstripe-config', '6.1'));
+        $this->assertSame(['2'], $manager->getMappedMinorBranches('silverstripe-config', '5.4'));
+        $this->assertSame(['3'], $manager->getMappedMajorBranches('silverstripe-config', '6'));
+        $this->assertSame(['2'], $manager->getMappedMajorBranches('silverstripe-config', '5'));
+        $this->assertSame(['1'], $manager->getMappedMinorBranches('startup-theme', '6.1'));
+        $this->assertSame([], $manager->getMappedMinorBranches('startup-theme', '5.4'));
+    }
+
+    public function testLoadSupportedModuleMajorMappingsExcludesNullPackagistRepos(): void
+    {
+        $rawItems = [
+            // Has packagist — should be included
+            [
+                'github' => 'silverstripe/silverstripe-config',
+                'packagist' => 'silverstripe/config',
+                'majorVersionMapping' => ['6' => ['3'], '5' => ['2']],
+            ],
+            // packagist is null — should be excluded (e.g. webpack-config, eslint-config)
+            [
+                'github' => 'silverstripe/webpack-config',
+                'packagist' => null,
+                'majorVersionMapping' => ['6' => ['3'], '5' => ['2']],
+            ],
+            // packagist key absent — should also be excluded
+            [
+                'github' => 'silverstripe/eslint-config',
+                'majorVersionMapping' => ['6' => ['1']],
+            ],
+            // hardcoded exclusion: skeleton template repo with a packagist entry
+            [
+                'github' => 'silverstripe/silverstripe-module',
+                'packagist' => 'silverstripe-module/skeleton',
+                'majorVersionMapping' => ['5' => ['5']],
+            ],
+        ];
+
+        $date = new DateTimeImmutable('2026-03-23 Pacific/Auckland');
+        $manager = new class ($date, $rawItems) extends CmsBuildsManager {
+            public function __construct(
+                private DateTimeImmutable $currentDate,
+                private array $rawItems
+            ) {
+            }
+
+            protected function fetchAllRepositoryMetaData(bool $refetch): array
+            {
+                return $this->rawItems;
+            }
+
+            protected function loadLocksteppedRepos(bool $refetch): array
+            {
+                return [];
+            }
+
+            protected function getCurrentDateNZT(): DateTimeImmutable
+            {
+                return $this->currentDate;
+            }
+        };
+        $manager->load(new ArrayRequester($this->getFiles()), false);
+
+        $repos = $manager->getVisibleRepoNames();
+        $this->assertContains('silverstripe-config', $repos);
+        $this->assertNotContains('webpack-config', $repos);
+        $this->assertNotContains('eslint-config', $repos);
+        $this->assertNotContains('silverstripe-module', $repos);
     }
 
     public function testGetMappedMinorBranchesForNonLocksteppedRepo(): void

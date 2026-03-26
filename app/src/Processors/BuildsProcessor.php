@@ -79,6 +79,10 @@ EOT;
             } else {
                 if (count($majorBranches)) {
                     $currMajBrn = $majorBranches[0];
+                    // No minor branches — map major branches into minor-column slots so badges are fetched.
+                    $nextMinBrn = $majorBranches[0];
+                    $pmMinBrn   = $majorBranches[1] ?? '';
+                    $pmPatBrn   = $majorBranches[2] ?? '';
                 } else {
                     continue;
                 }
@@ -134,6 +138,7 @@ EOT;
             $row = [
                 'account' => $account,
                 'repo' => $repo,
+                'type' => $moduleType,
 
                 // next major
                 'nextMajBrn' => $nextMajBrn ? ($nextMajBrn . '.x-dev') : '',
@@ -195,7 +200,7 @@ EOT;
         $manager = new SupportedModulesManager();
         $modules = $manager->getModules();
         $varsList = [];
-        foreach (['regular', 'tooling'] as $moduleType) {
+        foreach (['regular', 'other'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
                     $varsList[] = [$account, $repo, $moduleType];
