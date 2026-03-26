@@ -81,6 +81,11 @@ class CmsBuildsManager
      */
     private array $locksteppedRepos = [];
 
+    /**
+     * @var array<string, array<string, string[]>> repo => [cmsMajor => moduleMajors[]]
+     */
+    private array $supportedModuleMajorMappings = [];
+
     private bool $isLoaded = false;
 
     /**
@@ -124,6 +129,7 @@ class CmsBuildsManager
 
         $this->installerToRepoMinorVersions = $this->parseInstallerToRepoMinorVersions($constsPhp);
         $this->cmsMajorToVersions = $this->deriveVisibleCmsVersions($roadmapJson->data);
+        $this->supportedModuleMajorMappings = $this->loadSupportedModuleMajorMappings($refetch);
         $this->locksteppedRepos = $this->loadLocksteppedRepos($refetch);
         $this->isLoaded = true;
     }
@@ -164,6 +170,11 @@ class CmsBuildsManager
                     $repos[$repo] = true;
                 }
             }
+            foreach ($this->supportedModuleMajorMappings as $repo => $mapping) {
+                if (isset($mapping[$cmsMajor])) {
+                    $repos[$repo] = true;
+                }
+            }
         }
         return array_keys($repos);
     }
@@ -180,7 +191,12 @@ class CmsBuildsManager
             $moduleMajors = $this->locksteppedRepos[$repo][$cmsMajor] ?? [];
             return array_map(fn(string $major) => "$major.$cmsMinor", $moduleMajors);
         }
-        return $this->normaliseVersionList($this->installerToRepoMinorVersions[$cmsVersion][$repo] ?? null);
+        $minorBranches = $this->normaliseVersionList($this->installerToRepoMinorVersions[$cmsVersion][$repo] ?? null);
+        if ($minorBranches !== []) {
+            return $minorBranches;
+        }
+        [$cmsMajor] = explode('.', $cmsVersion, 2);
+        return $this->supportedModuleMajorMappings[$repo][$cmsMajor] ?? [];
     }
 
     /**
@@ -379,36 +395,105 @@ class CmsBuildsManager
      *
      * @return array<string, array<string, string[]>>
      */
+    /**
+     * Returns raw repository metadata items from the supported-modules package.
+     * Extracted to a protected method so tests can override without network calls.
+     */
+    protected function fetchAllRepositoryMetaData(bool $refetch): array
+    {
+        return MetaData::getAllRepositoryMetaData(false, $refetch);
+    }
+
     protected function loadLocksteppedRepos(bool $refetch): array
     {
         $result = [];
-        $allItems = MetaData::getAllRepositoryMetaData(false, $refetch);
+        $allItems = $this->fetchAllRepositoryMetaData($refetch);
         foreach ($allItems as $item) {
             if (!is_array($item) || !($item['lockstepped'] ?? false)) {
                 continue;
             }
-            $github = is_string($item['github'] ?? null) ? $item['github'] : '';
-            if ($github === '' || !str_contains($github, '/')) {
+            $repo = $this->extractRepoName($item);
+            if ($repo === '') {
                 continue;
             }
-            [, $repo] = explode('/', $github, 2);
-            $rawMapping = is_array($item['majorVersionMapping'] ?? null) ? $item['majorVersionMapping'] : [];
-            if (empty($rawMapping)) {
-                continue;
-            }
-            $mapping = [];
-            foreach ($rawMapping as $cmsMajor => $moduleMajors) {
-                $mapping[(string) $cmsMajor] = array_values(array_filter(
-                    array_map('strval', (array) $moduleMajors),
-                    fn (string $major): bool => $major !== ''
-                ));
-            }
+            $mapping = $this->normaliseMajorVersionMapping(
+                is_array($item['majorVersionMapping'] ?? null) ? $item['majorVersionMapping'] : []
+            );
             if ($mapping === []) {
                 continue;
             }
             $result[$repo] = $mapping;
         }
         return $result;
+    }
+
+    /**
+     * Loads repo -> CMS major -> module major mappings for all supported-module repos that
+     * explicitly declare CMS-major compatibility, even when they are not lockstepped.
+     *
+     * @return array<string, array<string, string[]>>
+     */
+    protected function loadSupportedModuleMajorMappings(bool $refetch): array
+    {
+        // Repos that have a packagist entry but are not real installable modules.
+        $excluded = ['silverstripe-module'];
+
+        $result = [];
+        $allItems = $this->fetchAllRepositoryMetaData($refetch);
+        foreach ($allItems as $item) {
+            if (!is_array($item) || !is_string($item['packagist'] ?? null)) {
+                continue;
+            }
+            $repo = $this->extractRepoName($item);
+            if ($repo === '' || in_array($repo, $excluded, true)) {
+                continue;
+            }
+            $mapping = $this->normaliseMajorVersionMapping(
+                is_array($item['majorVersionMapping'] ?? null) ? $item['majorVersionMapping'] : []
+            );
+            if ($mapping === []) {
+                continue;
+            }
+            $result[$repo] = $mapping;
+        }
+        return $result;
+    }
+
+    /**
+     * Extracts the repository name from a supported-modules metadata record.
+     */
+    private function extractRepoName(array $item): string
+    {
+        $github = is_string($item['github'] ?? null) ? $item['github'] : '';
+        if ($github === '' || !str_contains($github, '/')) {
+            return '';
+        }
+        [, $repo] = explode('/', $github, 2);
+        return $repo;
+    }
+
+    /**
+     * Filters a supported-modules majorVersionMapping down to supported CMS majors with branch data.
+     *
+     * @return array<string, string[]>
+     */
+    private function normaliseMajorVersionMapping(array $rawMapping): array
+    {
+        $mapping = [];
+        foreach ($rawMapping as $cmsMajor => $moduleMajors) {
+            $cmsMajor = (string) $cmsMajor;
+            if (
+                $cmsMajor === '*' ||
+                version_compare($cmsMajor, MetaData::LOWEST_SUPPORTED_CMS_MAJOR, '<')
+            ) {
+                continue;
+            }
+            $mapping[$cmsMajor] = $this->sortVersionsDescending(array_values(array_filter(
+                array_map('strval', (array) $moduleMajors),
+                fn(string $major): bool => $major !== ''
+            )));
+        }
+        return array_filter($mapping);
     }
 
     /**

@@ -10,6 +10,9 @@ class SupportedModulesManager
 
     private array $cmsMajorToBranches = [];
 
+    // Repos miscategorised upstream as misc that are actually regular installable modules.
+    private const REGULAR_OVERRIDES = ['silverstripe-non-blocking-sessions', 'doorman'];
+
     public function getModules(): array
     {
         if (!empty($this->modules)) {
@@ -18,14 +21,14 @@ class SupportedModulesManager
         $repoData = MetaData::getAllRepositoryMetaData();
         $this->modules = [
             'regular' => [],
-            'tooling' => [],
+            'other' => [],
         ];
         // Adapt json keys to the keys used in rhino
         $types = [
             MetaData::CATEGORY_SUPPORTED => 'regular',
-            MetaData::CATEGORY_WORKFLOW => 'tooling',
-            MetaData::CATEGORY_TOOLING => 'tooling',
-            MetaData::CATEGORY_MISC => 'tooling',
+            MetaData::CATEGORY_WORKFLOW => 'other',
+            MetaData::CATEGORY_TOOLING => 'other',
+            MetaData::CATEGORY_MISC => 'other',
         ];
         foreach ($types as $category => $type) {
             foreach ($repoData[$category] as $module) {
@@ -34,6 +37,9 @@ class SupportedModulesManager
                     continue;
                 }
                 [$account, $repo] = explode('/', $module['github']);
+                if (in_array($repo, self::REGULAR_OVERRIDES, true)) {
+                    $type = 'regular';
+                }
                 $this->modules[$type][$account] ??= [];
                 $this->modules[$type][$account][] = $repo;
                 $this->cmsMajorToBranches[$repo] = $majorVersionMapping;
