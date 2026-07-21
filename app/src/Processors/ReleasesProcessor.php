@@ -90,7 +90,7 @@ EOT;
         $rows = [];
 
         $varsList = [];
-        foreach (['regular', 'tooling'] as $moduleType) {
+        foreach (['regular', 'other'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
                     if (in_array("{$account}/{$repo}", self::EXCLUDE_MODULES)) {
@@ -431,7 +431,6 @@ EOT;
     // TODO: Put this into PullRequestUtil
     private function isDevFile(stdClass $file): bool
     {
-        // possiblly should treat .scrutinizer as 'tooling'
         $path = $file->filename;
         $paths = [
             '.codeclimate.yml',
