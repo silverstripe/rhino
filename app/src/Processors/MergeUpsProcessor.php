@@ -68,7 +68,7 @@ EOT;
         $modules = $manager->getModules();
 
         $repoList = [];
-        foreach (['regular', 'tooling'] as $moduleType) {
+        foreach (['regular', 'other'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
                     $repoList[] = [$account, $repo];
@@ -161,8 +161,9 @@ EOT;
                     // Add actual column data here
                     foreach ($columns as $col) {
                         // If we have no branches left, or the branch is the wrong type for this column, skip the column
+                        $branch = $branches[$branchIndex] ?? '';
                         $wrongType = $col !== $colPrefix && !str_contains($col, 'NextMin')
-                            && !preg_match('/[0-9]+\.[0-9]/', $branches[$branchIndex]);
+                            && !preg_match('/[0-9]+\.[0-9]/', $branch);
                         if (!isset($branches[$branchIndex]) || $wrongType) {
                             $row[$col] = str_ends_with($col, 'status') ? $nothingToMerge : '';
                             continue;

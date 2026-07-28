@@ -37,11 +37,11 @@ class SupportedModulesManager
                     continue;
                 }
                 [$account, $repo] = explode('/', $module['github']);
-                if (in_array($repo, self::REGULAR_OVERRIDES, true)) {
-                    $type = 'regular';
-                }
-                $this->modules[$type][$account] ??= [];
-                $this->modules[$type][$account][] = $repo;
+                // Use a separate variable - overwriting $type would leak 'regular' onto
+                // every subsequent repo in the same category
+                $moduleType = in_array($repo, self::REGULAR_OVERRIDES, true) ? 'regular' : $type;
+                $this->modules[$moduleType][$account] ??= [];
+                $this->modules[$moduleType][$account][] = $repo;
                 $this->cmsMajorToBranches[$repo] = $majorVersionMapping;
             }
         }

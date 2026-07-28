@@ -56,7 +56,7 @@ EOT;
         $rows = [];
 
         $varsList = [];
-        foreach (['regular', 'tooling'] as $moduleType) {
+        foreach (['regular', 'other'] as $moduleType) {
             foreach ($modules[$moduleType] as $account => $repos) {
                 foreach ($repos as $repo) {
                     $varsList[] = [$account, $repo, $moduleType];
