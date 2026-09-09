@@ -7,7 +7,7 @@ class MetaData
     public const TEAMS = [
         'product' => [
             'emteknetnz',
-            'GuySartorelli',
+            'ChloeSartorelli',
         ],
         'core-committers' => [
             'sminnee',
